@@ -127,6 +127,17 @@ resource "aws_instance" "portfolio_web" {
 
   key_name = aws_key_pair.portfolio_key.key_name # 鍵を紐付け
 
+  # --- ここから追加 ---
+  user_data = <<-EOF
+              #!/bin/bash
+              dnf update -y
+              dnf install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Terraformで自動構築したWebサーバー</h1>" > /var/www/html/index.html
+              EOF
+  # --- ここまで追加 ---
+
   # サーバーに名前をつける
   tags = {
     Name = "${var.project_name}-web-server"

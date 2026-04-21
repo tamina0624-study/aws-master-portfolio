@@ -1,3 +1,6 @@
+# .gitignore の内容（推奨）
+.terraform.lock.hcl
+
 # Local .terraform directories
 .terraform/
 

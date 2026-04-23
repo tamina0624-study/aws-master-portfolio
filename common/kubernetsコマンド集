@@ -1,0 +1,45 @@
+■minikube開始
+docker desktop を起動後に以下を実行
+minikube start   
+
+■kubernetsコマンド
+#アプリの「実行状態」を管理。ポッドの数やアップデート戦略を定義します。
+kubectl apply -f nginx-deployment.yaml
+
+#「窓口」の作成。外部や他のポッドからnginxにアクセスするための通信経路を作ります。
+kubectl apply -f nginx-service.yaml
+
+#最も小さな単位である「コンテナの集合体」を直接起動します（テスト用が多い）。
+kubectl apply -f manifests/nginx-pod.yaml
+
+#設定値や環境変数を定義。アプリ本体と設定を切り離して管理します。
+kubectl apply -f nginx-config.yaml
+
+kubectl apply -f manifests/nginx-ingress.yaml
+
+#kubernetsのロードバランス状況の表示
+kubectl get svc
+
+kubectl get ingress
+
+
+#podの起動状況の取得
+kubectl get pods
+
+# kubernets 親 に機密情報を登録する
+kubectl create secret generic mysql-pass --from-literal=password='MySecretPass123'
+
+#Docker Desktop 上で Minikube を動かしている場合、
+#Minikube 内部の IP（192.168.xx.xx）には Windows から直接手が届きません。
+#そのため、minikube service コマンドが Windows の 127.0.0.1（localhost）から 
+#Minikube 内部へ橋（トンネル）を架けてくれます。
+minikube service ingress-nginx-controller -n ingress-nginx
+
+minikube tunnel
+
+
+--work space-------------------------------------------------------------------------------
+nginx-deployment-995c5556f-29w4z
+
+kubectl apply -f backend-api.yaml
+kubectl apply -f nginx-ingress.yaml

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3          # ★Podを常に3つ維持するように命令
+  selector:
+    matchLabels:
+      app: my-web-app  # どのPodを管理対象にするかの目印
+  template:
+    metadata:
+      labels:
+        app: my-web-app # Podに付けるラベル
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: WELCOME_TEXT
+          valueFrom:
+            configMapKeyRef:
+              name: nginx-message-config
+              key: MY_MESSAGE
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+              

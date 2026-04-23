@@ -15,6 +15,22 @@ spec:
       containers:
       - name: nginx
         image: nginx:latest
+        # --- ここからプローブの設定 ---
+        livenessProbe:
+          httpGet:
+            path: /healthz    # チェック用のパス
+            port: 8080        # アプリが待機しているポート
+          initialDelaySeconds: 3  # 起動後、3秒待ってからチェック開始
+          periodSeconds: 10       # 10秒ごとにチェック
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        # --- ここまでプローブの設定 ---
+        
         ports:
         - containerPort: 80
         env:

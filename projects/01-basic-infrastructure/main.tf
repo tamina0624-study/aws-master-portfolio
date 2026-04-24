@@ -7,6 +7,7 @@ provider "aws" {
 module "network" {
   source       = "./modules/network"
   project_name = var.project_name
+  aws_region =var.aws_region
 }
 
 
@@ -55,6 +56,6 @@ module "compute" {
   source       = "./modules/compute"
   project_name = var.project_name
   vpc_id       = module.network.vpc_id
-  subnet_id    = module.network.subnet_id
+  subnet_id    = module.network.subnet_public_1_id
   aws_security_group_id = aws_security_group.portfolio_sg.id
 }

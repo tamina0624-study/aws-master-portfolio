@@ -3,12 +3,23 @@ resource "aws_vpc" "main" {
   tags = { Name = "${var.project_name}-vpc" }
 }
 
-resource "aws_subnet" "public" {
+resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidr
+  cidr_block              = var.public_1_subnet_cidr
+  availability_zone = "${var.aws_region}a"
   map_public_ip_on_launch = true
   tags = { Name = "${var.project_name}-public-sub" }
 }
+
+resource "aws_subnet" "public_2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block              = var.public_2_subnet_cidr
+  availability_zone = "${var.aws_region}b"
+  map_public_ip_on_launch = true
+  tags = { Name = "public-subnet-2" }
+}
+
+
 
 # 2. インターネットゲートウェイの作成
 resource "aws_internet_gateway" "igw" {
@@ -18,6 +29,8 @@ resource "aws_internet_gateway" "igw" {
     Name = "${var.project_name}-igw"
   }
 }
+
+
 
 # 3. ルートテーブルの作成
 resource "aws_route_table" "public_rt" {
@@ -35,6 +48,11 @@ resource "aws_route_table" "public_rt" {
 
 # 4. サブネットとルートテーブルの紐付け
 resource "aws_route_table_association" "public_rt_assoc" {
-  subnet_id      = aws_subnet.public.id
+  subnet_id      = aws_subnet.public_1.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "public_rt_assoc2" {
+  subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public_rt.id
 }

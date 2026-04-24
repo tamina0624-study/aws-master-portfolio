@@ -7,20 +7,9 @@ git status
 git add .
 
 # 3. 修正内容をメモ（コミット）
-git commit -m "kubernetesの学習(複数アプリのルーティング構成)"
+git commit -m "TerraformによるAWS Kubernetes環境構築（K3s & EKS）"
 
 # 4. GitHubに送信
 git push origin main
 
-
-■terraformコマンド
-
-#プロジェクトの初期化・プラグイン導入
-terraform init
-
-#実行前に変更内容を確認（最重要ステップ）
-terraform plan
-
-#AWSへリソースを実際に作成・更新
-terraform apply
 

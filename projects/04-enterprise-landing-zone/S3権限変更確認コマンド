@@ -7,19 +7,20 @@ aws s3api list-buckets --query "Buckets[?contains(Name, 'cloudtrail-logs')].Name
 
 2. 現在の「ブロック設定」が効いているか確認する
 bash
-aws s3api get-public-access-block --bucket <あなたのバケット名>
+aws s3api get-public-access-block --bucket portfolio-lz-cloudtrail-logs-638892640336
 ※「BlockPublicAcls: true」などが表示されれば、正常に防御されています。
 
 3. 【攻撃シミュレーション】ブロック設定を破壊（削除）する
 わざとパブリックアクセスブロックを解除し、世界中に公開できる危険な状態にします。
-
+ 
 bash
-aws s3api delete-public-access-block --bucket <あなたのバケット名>
+aws s3api delete-public-access-block --bucket portfolio-lz-cloudtrail-logs-638892640336
+aws s3api get-public-access-block --bucket portfolio-lz-cloudtrail-logs-638892640336
 ※コマンドを実行しても何も返ってきませんが、それが成功（削除完了）の証拠です。
 
 4. 破壊されたことを確認する
 bash
-aws s3api get-public-access-block --bucket <あなたのバケット名>
+aws s3api get-public-access-block --bucket portfolio-lz-cloudtrail-logs-638892640336
 ※削除直後なので NoSuchPublicAccessBlockConfiguration というエラーが出ます。これでバケットは無防備な状態です！
 
 5. 【自動修復の確認】Lambdaが発動するのを待つ

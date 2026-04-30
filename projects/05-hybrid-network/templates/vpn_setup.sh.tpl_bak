@@ -1,0 +1,63 @@
+#!/bin/bash
+# VPNルーター (strongSwan + FRR) の自動構築スクリプト
+
+# 1. IPフォワーディングの有効化（ルーターとしてパケットを中継するために必須）
+echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+sysctl -p
+
+# 2. 必要なソフトウェア(IPsecとBGP)のインストール
+dnf update -y
+dnf install -y strongswan frr
+
+# 3. IPsec (strongSwan) の設定（TerraformからトンネルのIPを注入）
+cat <<EOF > /etc/strongswan/ipsec.conf
+config setup
+conn %default
+    ikelifetime=28800s
+    keylife=3600s
+    keyexchange=ikev1
+    authby=secret
+
+# トンネル1の設定
+conn tunnel1
+    left=%defaultroute
+    leftid=${onprem_public_ip}
+    right=${tun1_outside_ip}
+    auto=start
+
+# トンネル2の設定 (冗長化用)
+conn tunnel2
+    left=%defaultroute
+    leftid=${onprem_public_ip}
+    right=${tun2_outside_ip}
+    auto=start
+EOF
+
+# IPsecのパスワード(事前共有鍵)の設定
+cat <<EOF > /etc/strongswan/ipsec.secrets
+${onprem_public_ip} ${tun1_outside_ip} : PSK "${tun1_psk}"
+${onprem_public_ip} ${tun2_outside_ip} : PSK "${tun2_psk}"
+EOF
+
+systemctl enable strongswan
+systemctl start strongswan
+
+# 4. BGP (FRR) の設定（動的ルーティング）
+sed -i 's/bgpd=no/bgpd=yes/' /etc/frr/daemons
+
+cat <<EOF > /etc/frr/frr.conf
+router bgp ${onprem_bgp_asn}
+  bgp router-id ${tun1_inside_cgw_ip}
+  
+  # AWS側のVGW（トンネル1と2）とのピアリング設定
+  neighbor ${tun1_inside_vgw_ip} remote-as ${aws_bgp_asn}
+  neighbor ${tun2_inside_vgw_ip} remote-as ${aws_bgp_asn}
+
+  # オンプレミス側のネットワーク範囲をAWSへ教える(広報する)
+  address-family ipv4 unicast
+    network ${onprem_vpc_cidr}
+  exit-address-family
+EOF
+
+systemctl enable frr
+systemctl start frr

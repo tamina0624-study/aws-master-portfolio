@@ -1,0 +1,36 @@
+1. 「開発者ロール」に変身するための鍵を取得する
+まず、ご自身のアカウントID（12桁の数字）を準備し、以下のコマンドを実行します。
+
+powershell
+aws sts assume-role --role-arn "arn:aws:iam:::role/portfolio-lz-developer-role" --role-session-name "DevTestSession"
+すると、以下のようなJSON形式の結果が返ってきます。
+
+json
+{
+}
+
+2. 環境変数に鍵をセットする（変身完了）
+Windows（PowerShell）を使用されているため、表示された3つのキーを環境変数にセットします。以下のコマンドの " " の中身を、さきほど表示されたご自身の値に書き換えて実行してください。
+
+powershell
+これで現在のPowerShellのウィンドウ内では、あなたは「ガードレール付きの開発者」として扱われます。
+
+3. CLIで攻撃シミュレーション（検証）
+① 許可されている操作（EC2の確認） エラーにならず、情報（または空のリスト）が返ってくれば成功です。
+
+powershell
+aws ec2 describe-instances
+
+② 【本命】境界線でブロックされる操作（CloudTrailの停止） 監査ログを止めようとする悪意のある操作です。
+powershell
+aws cloudtrail stop-logging --name portfolio-lz-main-trail
+👉 AccessDeniedException（権限がありません）という赤いエラーメッセージが出れば検証大成功です！強力な管理者権限を持っていても、境界線（Permissions Boundary）が機能してシステムを守っています。
+
+4. 検証が終わったら（元の自分に戻る）
+検証が完了したら、セットした一時的な環境変数を削除して、本来の強い権限（ご自身のアカウント）に戻ります。
+
+powershell
+Remove-Item Env:\AWS_ACCESS_KEY_ID
+Remove-Item Env:\AWS_SECRET_ACCESS_KEY
+Remove-Item Env:\AWS_SESSION_TOKEN
+この「CLIを使った権限の境界線（Permissions Boundary）のテスト」は、実務のセキュリティテスト（ペネトレーションテスト等）で実際に行われる手法です。ポートフォリオの README や「学習のまとめ」に記載するネタとして非常に強力ですので、ぜひメモに残しておいてください！

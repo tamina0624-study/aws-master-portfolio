@@ -1,0 +1,39 @@
+sudo ip tunnel add vti-t1 local 172.16.0.223 remote 3.18.50.193 mode vti key 10
+sudo ip tunnel add vti-t2 local 172.16.0.223 remote 18.221.57.88 mode vti key 11
+
+sudo ip addr add 169.254.49.226/30 dev vti-t1
+sudo ip addr add 169.254.233.34/30 dev vti-t2
+
+sudo ip link set vti-t1 up
+sudo ip link set vti-t2 up
+
+sudo ip route add 169.254.49.224/30 dev vti-t1 table 220
+sudo ip route add 169.254.233.32/30 dev vti-t2 table 220
+
+sudo ip route add 10.0.1.0/24 dev vti-t1 table 220 metric 10
+sudo ip route add 10.0.1.0/24 dev vti-t2 table 220 metric 20
+
+
+
+sudo sysctl net.ipv4.conf.all.rp_filter
+sudo sysctl net.ipv4.conf.default.rp_filter
+sudo sysctl net.ipv4.conf.vti-t1.rp_filter
+sudo sysctl net.ipv4.conf.vti-t2.rp_filter
+
+#非対称ルートを許可する
+sudo sysctl -w net.ipv4.conf.all.rp_filter=0
+
+
+#IPsecのポリシーベース制御（SPD）を無効化
+sudo sysctl net.ipv4.conf.vti-t1.disable_policy
+sudo sysctl -w net.ipv4.conf.vti-t1.disable_policy=1
+
+#IPsecの暗号化処理（xfrm）をこのIFで無効化
+sudo sysctl net.ipv4.conf.vti-t1.disable_xfrm
+sudo sysctl -w net.ipv4.conf.vti-t1.disable_xfrm=1
+
+
+#Bgp確認コマンド
+sudo vtysh -c "show bgp neighbor 169.254.49.226"
+
+sudo tcpdump -i any -nn port 179

@@ -1,0 +1,83 @@
+sudo apt update
+sudo apt install strongswan strongswan-swanctl charon-systemd
+
+sudo systemctl restart strongswan-swanctl
+
+sudo rm /etc/swanctl/swanctl.conf
+sudo vim /etc/swanctl/swanctl.conf
+
+# 従来のサービスを停止（念のため）
+sudo systemctl stop strongswan-starter
+
+# charon-systemd サービスを開始
+# 実体である strongswan サービスを起動
+sudo systemctl enable --now strongswan-starter
+
+systemctl status strongswan-starter
+
+
+sudo swanctl --load-all
+
+sudo swanctl --list-conns
+
+sudo swanctl --list-sas
+
+sudo swanctl --initiate --child vti-t1
+sudo swanctl --initiate --child vti-t2
+
+sudo swanctl --list-sas
+
+ip addr show
+
+
+# VTIインターフェースの作成
+sudo ip tunnel add vti-t1 local 172.16.0.223 remote 3.129.118.107 mode vti key 1
+
+# インターフェースを起動
+sudo ip link set vti-t1 up
+
+# インターフェースにIPアドレス（AWS側から指定されたもの）を付与
+# ※もしAWSのVPN設定ガイドがあれば、そこに記載されている「Inside IP Address」を指定します
+# 例: sudo ip addr add 169.254.x.x/30 dev vti-t1
+
+sudo ip route add 18.118.32.0/24 dev vti-t1
+
+
+
+ping -I 172.16.0.223 10.0.1.83
+
+#暗号化ポリシー
+sudo ip xfrm policy
+
+sudo swanctl --terminate --ike aws-tunnel-1
+sudo swanctl --terminate --ike aws-tunnel-2
+
+sudo swanctl --initiate --ike aws-tunnel-1
+sudo swanctl --initiate --ike aws-tunnel-2
+
+sudo apt install frr
+
+
+sudo ip -d link show vti-t1
+
+sudo ip link delete vti-t1
+
+sudo ip link add vti-t1 type vti \
+  local 172.16.0.223 \
+  remote 3.18.50.193 \
+  key 10
+
+
+
+ip addr add 169.254.49.225/30 dev vti-t1
+ip link set vti-t1 up
+
+ip route add 169.254.49.224/30 dev vti-t1
+ip route add 10.0.0.0/16 dev vti-t1
+
+
+sudo ip tunnel add vti-t1 local 172.16.0.223 remote 3.18.50.193 mode vti key 10
+sudo ip link set vti-t1 up
+sudo ip addr add 169.254.49.225/30 dev vti-t1
+
+sudo ip route add 10.0.0.0/16 dev vti-t1

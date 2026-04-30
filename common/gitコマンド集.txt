@@ -7,7 +7,7 @@ git status
 git add .
 
 # 3. 修正内容をメモ（コミット）
-git commit -m "TerraformによるAWS Kubernetes環境構築（K3s & EKS）"
+git commit -m "ハイブリッドネットワーク構築：Site-to-Site VPNとBGPによる動的冗長化"
 
 # 4. GitHubに送信
 git push origin main

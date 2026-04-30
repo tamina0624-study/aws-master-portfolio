@@ -1,0 +1,63 @@
+・SSHキーの定義周りの調整が苦労した
+・最終的に古いキャッシュが残っていたらしい
+・セキュリティポリシーに自動でSSHを開放したかった
+
+ssh-keygen -R 3.15.49.151
+
+
+
+VPN のphase2の接続でAWSが内部で持っている169.xx.xx.xxのアドレスと通信したい
+送って帰ってくるようになったらしいが、帰りのパケットにMarkが付けられない為
+暗号化処理の対象にならないらしい
+
+
+・AWSのsite to site VPN画面でアドレスレンジを0.0.0.0/0にすることで飛ばせるようになったらしい
+・上記問題の解決によりMarkが設定しやすそうなswactlに戻る
+・帰りのパケットをMark付けなくても動く対応をする対応を行う
+・swanctlでmark_inを消すと、暗号化の無限ループに掛かった
+・swanctlの対象レンジを複数定義することで無限ループを回避しようとしたが、
+AWS側で複数定義に対応していない事が分かった。
+
+mark_in設定を消さない対応で再度試みる
+
+
+
+取り合えず、通信の流れがいまいち分かってないっぽいので整理したほうが良い
+EC2側(3.15.49.151)⇔privategateway(3.129.118.107)
+EC2(3.15.49.151)から出るにはEC2（172.16.0.122）を使ってEC2のNATの仕組みを使う必要ある
+その時に相手からはダレ宛の通信をするように見えているか？
+
+ここまではphase1で通信が成立しているから追える
+
+phase2は今度は誰と誰の通信をしたいのか？？
+
+
+
+AWS Site-to-Site VPNは：
+👉 route-basedっぽく見えるが実態はpolicy-based寄り
+なので
+「BGPで経路通してるのに通信できない」
+→ よくある
+理由：
+👉 IPsec selectorが優先される 
+
+
+iptables -t mangle -A PREROUTING -d 10.0.0.0/16 -j MARK --set-mark 10
+
+sudo swanctl --initiate --ike aws-tunnel-1
+sudo swanctl --initiate --ike aws-tunnel-2
+
+
+ip rule
+sudo ip rule del table 220
+ip route get 10.0.1.83
+
+sysctl -w net.ipv4.conf.all.rp_filter=0
+sysctl -w net.ipv4.conf.vti-t1.rp_filter=0
+
+sudo sysctl -w net.ipv4.conf.vti-t1.disable_policy=1
+sudo sysctl -w net.ipv4.conf.vti-t1.disable_xfrm=1
+
+
+169.254.49.224/30
+169.254.233.32/30

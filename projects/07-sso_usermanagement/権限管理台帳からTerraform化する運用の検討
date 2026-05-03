@@ -1,0 +1,68 @@
+はい、ExcelやCSV形式の台帳データからTerraformコードを自動生成するスクリプトはPythonなどで実現できます。
+ここでは「CSV台帳→Terraformリソース生成」のシンプルなPythonスクリプト例を紹介します。
+
+---
+
+## 1. 権限管理台帳（CSV例）
+
+```csv
+user_name,email,group,permission_set,aws_account_id
+dev-user,dev@example.com,Developers,DeveloperAccess,123456789012
+admin-user,admin@example.com,Admins,AdministratorAccess,123456789012
+```
+
+---
+
+## 2. Pythonスクリプト例（CSV→Terraform）
+
+```python
+import csv
+
+with open('権限管理表.csv', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        # ユーザーリソース
+        print(f'resource "aws_identitystore_user" "{row["user_name"]}" {{')
+        print('  identity_store_id = data.aws_ssoadmin_instances.this.identity_store_ids[0]')
+        print(f'  user_name         = "{row["user_name"]}"')
+        print(f'  display_name      = "{row["user_name"]}"')
+        print('  emails {')
+        print(f'    value   = "{row["email"]}"')
+        print('    primary = true')
+        print('  }')
+        print('}\n')
+
+        # グループリソース
+        print(f'resource "aws_identitystore_group" "{row["group"]}" {{')
+        print('  identity_store_id = data.aws_ssoadmin_instances.this.identity_store_ids[0]')
+        print(f'  display_name      = "{row["group"]}"')
+        print('  description       = "{row["group"]} group"')
+        print('}\n')
+
+        # グループメンバーシップ
+        print(f'resource "aws_identitystore_group_membership" "{row["user_name"]}_to_{row["group"]}" {{')
+        print('  identity_store_id = data.aws_ssoadmin_instances.this.identity_store_ids[0]')
+        print(f'  group_id  = aws_identitystore_group.{row["group"]}.group_id')
+        print(f'  member_id = aws_identitystore_user.{row["user_name"]}.user_id')
+        print('}\n')
+
+        # Permission Set割り当て（Account Assignment）
+        print(f'resource "aws_ssoadmin_account_assignment" "{row["user_name"]}_assignment" {{')
+        print('  instance_arn       = data.aws_ssoadmin_instances.this.arns[0]')
+        print(f'  permission_set_arn = aws_ssoadmin_permission_set.{row["permission_set"]}.arn')
+        print(f'  principal_id       = aws_identitystore_user.{row["user_name"]}.user_id')
+        print('  principal_type     = "USER"')
+        print(f'  target_id          = "{row["aws_account_id"]}"')
+        print('  target_type        = "AWS_ACCOUNT"')
+        print('}\n')
+```
+
+---
+
+### 使い方
+
+1. 台帳をCSV形式で保存（例：権限管理表.csv）
+2. 上記Pythonスクリプトを実行
+3. 標準出力にTerraformコードが生成されるので、.tfファイルに貼り付けて利用
+
+---

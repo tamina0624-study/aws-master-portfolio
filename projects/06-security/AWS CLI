@@ -32,11 +32,11 @@ aws guardduty create-sample-findings --detector-id 70c41992c98dcbb60a5ff52316c0d
 aws guardduty list-findings --detector-id 70c41992c98dcbb60a5ff52316c0d774 --region us-east-2
 {
     "FindingIds": [
-        "ac42a3d0318549c3b7de6fed6e6ff964",
-        "9ecee66d76594e1a3d16e6826158b060",
-        "b4cee1ab04526d1ec311cf1a8167a695",
-        "faceb37fd21f3d7291eb80cff4a48d34"
+        "ac42a3d0318549b7de6fed6e6ff964",
+        "9ecee66d76591a3d16e6826158b060",
+        "b4cee1ab046d1ec311cf1a8167a695",
+        "faceb37f1f3d7291eb80cff4a48d34"
     ]
 }
 
-aws guardduty get-findings --detector-id faceb37fd21f3d7291eb80cff4a48d34 --finding-ids b4cee1ab04526d1ec311cf1a8167a695 --region us-east-2
+aws guardduty get-findings --detector-id faceb37fd21f3d71eb80cff4a48d34 --finding-ids b4cee1ab04526d1ec311a8167a695 --region us-east-2

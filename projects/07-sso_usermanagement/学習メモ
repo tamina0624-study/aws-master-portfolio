@@ -1,0 +1,7 @@
+Terraformでは、AWS IAM Identity Center（旧SSO）の「有効化」自体はリソースとして直接管理できません（2024年時点）。
+Identity Centerの有効化はAWSマネジメントコンソールまたはAWS CLIで一度だけ手動で行う必要があります。
+
+ただし、Terraformで管理できるのは「有効化後のリソース（Permission SetやAssignment等）」のみです。
+
+
+aws sso-admin create-instance-access-control-attribute-configuration --instance-arn <インスタンスARN> --instance-access-control-attribute-configuration 'AccessControlAttributes=[]' --region us-east-2

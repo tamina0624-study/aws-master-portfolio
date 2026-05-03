@@ -7,7 +7,16 @@ git status
 git add .
 
 # 3. 修正内容をメモ（コミット）
-git commit -m "AWSセキュリティ自動化とゼロトラスト運用構築"
+git commit -m "運用・監視：単なるダッシュボードではなく『アラートの運用設計』"
 
 # 4. GitHubに送信
 git push origin main
+
+
+■gitからファイルを消したい場合
+git clone --mirror https://github.com/ユーザー名/リポジトリ.git
+cd リポジトリ.git
+
+git filter-repo --path <削除したいファイルのgitpath> --invert-paths
+git push --force --all
+git push --force --tags

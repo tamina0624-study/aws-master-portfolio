@@ -1,0 +1,31 @@
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; font-family: sans-serif;">
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+        <!-- AWS VPC -->
+        <div style="border: 2px solid #FF9900; padding: 15px; width: 250px; text-align: center;">
+            <strong style="color: #FF9900;">AWS Region</strong><br>
+            <div style="margin-top: 10px; border: 1px dashed #666; padding: 10px;">
+                VPC (10.0.0.0/16)<br>
+                <div style="background-color: #FF9900; color: white; margin-top: 5px; padding: 5px;">Virtual Private Gateway</div>
+            </div>
+        </div>
+
+        <!-- VPN Tunnels -->
+        <div style="text-align: center; flex-grow: 1;">
+            <div style="color: #D63384; font-weight: bold;">Site-to-Site VPN</div>
+            <div style="border-bottom: 2px dashed #D63384; margin: 10px 0;">Tunnel 1 (BGP/IPsec)</div>
+            <div style="border-bottom: 2px dashed #D63384; margin: 10px 0;">Tunnel 2 (BGP/IPsec)</div>
+        </div>
+
+        <!-- On-Prem (Simulated) -->
+        <div style="border: 2px solid #333; padding: 15px; width: 250px; text-align: center;">
+            <strong>On-Premises (Simulated)</strong><br>
+            <div style="margin-top: 10px; border: 1px dashed #666; padding: 10px;">
+                VPC (192.168.0.0/16)<br>
+                <div style="background-color: #333; color: white; margin-top: 5px; padding: 5px;">EC2 Router<br>(StrongSwan + FRR)</div>
+            </div>
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 15px; font-size: 0.9em;">
+        AS64512 (AWS) ← BGP Peering → AS64513 (On-Prem)
+    </div>
+</div>

@@ -1,0 +1,530 @@
+
+#VPNのステータスを確認
+aws ec2 describe - vpn - connections--region us - east - 2 --query "VpnConnections[*].VgwTelemetry"
+
+#EC2の情報確認
+aws ec2 describe - instances--region us - east - 2
+
+{
+    "Reservations": [
+        {
+            "ReservationId": "r-0bce0fce04aa69baa",
+            "OwnerId": "638892640336",
+            "Groups": [],
+            "Instances": [
+                {
+                    "Architecture": "x86_64",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/xvda",
+                            "Ebs": {
+                                "AttachTime": "2026-04-24T09:54:21+00:00",
+                                "DeleteOnTermination": true,
+                                "Status": "attached",
+                                "VolumeId": "vol-0ed4453f7c784a6f0"
+                            }
+                        }
+                    ],
+                    "ClientToken": "terraform-20260424095419261300000001",
+                    "EbsOptimized": false,
+                    "EnaSupport": true,
+                    "Hypervisor": "xen",
+                    "NetworkInterfaces": [
+                        {
+                            "Association": {
+                                "IpOwnerId": "amazon",
+                                "PublicDnsName": "",
+                                "PublicIp": "18.118.32.99"
+                            },
+                            "Attachment": {
+                                "AttachTime": "2026-04-24T09:54:20+00:00",
+                                "AttachmentId": "eni-attach-06af8ebe679e0ad9d",
+                                "DeleteOnTermination": true,
+                                "DeviceIndex": 0,
+                                "Status": "attached",
+                                "NetworkCardIndex": 0
+                            },
+                            "Description": "",
+                            "Groups": [
+                                {
+                                    "GroupId": "sg-053eb11101060337e",
+                                    "GroupName": "portfolio-sg"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "MacAddress": "02:dc:6a:8a:d7:c3",
+                            "NetworkInterfaceId": "eni-029ab87a72fe83cab",
+                            "OwnerId": "638892640336",
+                            "PrivateIpAddress": "10.0.1.83",
+                            "PrivateIpAddresses": [
+                                {
+                                    "Association": {
+                                        "IpOwnerId": "amazon",
+                                        "PublicDnsName": "",
+                                        "PublicIp": "18.118.32.99"
+                                    },
+                                    "Primary": true,
+                                    "PrivateIpAddress": "10.0.1.83"
+                                }
+                            ],
+                            "SourceDestCheck": true,
+                            "Status": "in-use",
+                            "SubnetId": "subnet-054681eb181a209f3",
+                            "VpcId": "vpc-0ddf423ec42ecc332",
+                            "InterfaceType": "interface",
+                            "Operator": {
+                                "Managed": false
+                            }
+                        }
+                    ],
+                    "RootDeviceName": "/dev/xvda",
+                    "RootDeviceType": "ebs",
+                    "SecurityGroups": [
+                        {
+                            "GroupId": "sg-053eb11101060337e",
+                            "GroupName": "portfolio-sg"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Tags": [
+                        {
+                            "Key": "Name",
+                            "Value": "portfolio-web-server"
+                        }
+                    ],
+                    "VirtualizationType": "hvm",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 1
+                    },
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpTokens": "required",
+                        "HttpPutResponseHopLimit": 2,
+                        "HttpEndpoint": "enabled",
+                        "HttpProtocolIpv6": "disabled",
+                        "InstanceMetadataTags": "disabled"
+                    },
+                    "EnclaveOptions": {
+                        "Enabled": false
+                    },
+                    "BootMode": "uefi-preferred",
+                    "PlatformDetails": "Linux/UNIX",
+                    "UsageOperation": "RunInstances",
+                    "UsageOperationUpdateTime": "2026-04-24T09:54:20+00:00",
+                    "PrivateDnsNameOptions": {
+                        "HostnameType": "ip-name",
+                        "EnableResourceNameDnsARecord": false,
+                        "EnableResourceNameDnsAAAARecord": false
+                    },
+                    "MaintenanceOptions": {
+                        "AutoRecovery": "default",
+                        "RebootMigration": "default"
+                    },
+                    "CurrentInstanceBootMode": "legacy-bios",
+                    "NetworkPerformanceOptions": {
+                        "BandwidthWeighting": "default"
+                    },
+                    "Operator": {
+                        "Managed": false
+                    },
+                    "InstanceId": "i-0df4640409b3e8bfa",
+                    "ImageId": "ami-07fa12e88e5380434",
+                    "State": {
+                        "Code": 16,
+                        "Name": "running"
+                    },
+                    "PrivateDnsName": "ip-10-0-1-83.us-east-2.compute.internal",
+                    "PublicDnsName": "",
+                    "StateTransitionReason": "",
+                    "KeyName": "portfolio-key",
+                    "AmiLaunchIndex": 0,
+                    "ProductCodes": [],
+                    "InstanceType": "t2.micro",
+                    "LaunchTime": "2026-04-24T09:54:20+00:00",
+                    "Placement": {
+                        "AvailabilityZoneId": "use2-az1",
+                        "GroupName": "",
+                        "Tenancy": "default",
+                        "AvailabilityZone": "us-east-2a"
+                    },
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "SubnetId": "subnet-054681eb181a209f3",
+                    "VpcId": "vpc-0ddf423ec42ecc332",
+                    "PrivateIpAddress": "10.0.1.83",
+                    "PublicIpAddress": "18.118.32.99"
+                }
+            ]
+        },
+        {
+            "ReservationId": "r-02bb4d3c3a0a1424f",
+            "OwnerId": "638892640336",
+            "Groups": [],
+            "Instances": [
+                {
+                    "Architecture": "x86_64",
+                    "BlockDeviceMappings": [],
+                    "ClientToken": "terraform-20260426061404507800000001",
+                    "EbsOptimized": false,
+                    "EnaSupport": true,
+                    "Hypervisor": "xen",
+                    "NetworkInterfaces": [],
+                    "RootDeviceName": "/dev/xvda",
+                    "RootDeviceType": "ebs",
+                    "SecurityGroups": [],
+                    "StateReason": {
+                        "Code": "Client.UserInitiatedShutdown",
+                        "Message": "Client.UserInitiatedShutdown: User initiated shutdown"
+                    },
+                    "Tags": [
+                        {
+                            "Key": "Environment",
+                            "Value": "Portfolio"
+                        },
+                        {
+                            "Key": "Name",
+                            "Value": "OnPrem-VPN-Router"
+                        },
+                        {
+                            "Key": "ManagedBy",
+                            "Value": "Terraform"
+                        },
+                        {
+                            "Key": "Project",
+                            "Value": "HybridNetwork"
+                        }
+                    ],
+                    "VirtualizationType": "hvm",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 2
+                    },
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "pending",
+                        "HttpTokens": "required",
+                        "HttpPutResponseHopLimit": 2,
+                        "HttpEndpoint": "enabled",
+                        "HttpProtocolIpv6": "disabled",
+                        "InstanceMetadataTags": "disabled"
+                    },
+                    "EnclaveOptions": {
+                        "Enabled": false
+                    },
+                    "BootMode": "uefi-preferred",
+                    "PlatformDetails": "Linux/UNIX",
+                    "UsageOperation": "RunInstances",
+                    "UsageOperationUpdateTime": "2026-04-26T06:14:06+00:00",
+                    "MaintenanceOptions": {
+                        "AutoRecovery": "default",
+                        "RebootMigration": "default"
+                    },
+                    "CurrentInstanceBootMode": "uefi",
+                    "NetworkPerformanceOptions": {
+                        "BandwidthWeighting": "default"
+                    },
+                    "Operator": {
+                        "Managed": false
+                    },
+                    "InstanceId": "i-061880e8deb52b477",
+                    "ImageId": "ami-0a1b6a02658659c2a",
+                    "State": {
+                        "Code": 48,
+                        "Name": "terminated"
+                    },
+                    "PrivateDnsName": "",
+                    "PublicDnsName": "",
+                    "StateTransitionReason": "User initiated (2026-04-26 07:02:59 GMT)",
+                    "KeyName": "portfolio-key",
+                    "AmiLaunchIndex": 0,
+                    "ProductCodes": [],
+                    "InstanceType": "t3.small",
+                    "LaunchTime": "2026-04-26T06:14:06+00:00",
+                    "Placement": {
+                        "AvailabilityZoneId": "use2-az1",
+                        "GroupName": "",
+                        "Tenancy": "default",
+                        "AvailabilityZone": "us-east-2a"
+                    },
+                    "Monitoring": {
+                        "State": "disabled"
+                    }
+                }
+            ]
+        },
+        {
+            "ReservationId": "r-0f841f2fbbf17212a",
+            "OwnerId": "638892640336",
+            "Groups": [],
+            "Instances": [
+                {
+                    "Architecture": "x86_64",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/sda1",
+                            "Ebs": {
+                                "AttachTime": "2026-04-26T07:08:22+00:00",
+                                "DeleteOnTermination": true,
+                                "Status": "attached",
+                                "VolumeId": "vol-04e4427a0eff74890"
+                            }
+                        }
+                    ],
+                    "ClientToken": "terraform-20260426070819846600000001",
+                    "EbsOptimized": false,
+                    "EnaSupport": true,
+                    "Hypervisor": "xen",
+                    "NetworkInterfaces": [
+                        {
+                            "Association": {
+                                "IpOwnerId": "638892640336",
+                                "PublicDnsName": "ec2-3-15-49-151.us-east-2.compute.amazonaws.com",
+                                "PublicIp": "3.15.49.151"
+                            },
+                            "Attachment": {
+                                "AttachTime": "2026-04-26T07:08:21+00:00",
+                                "AttachmentId": "eni-attach-025471f8d751208d4",
+                                "DeleteOnTermination": true,
+                                "DeviceIndex": 0,
+                                "Status": "attached",
+                                "NetworkCardIndex": 0
+                            },
+                            "Description": "",
+                            "Groups": [
+                                {
+                                    "GroupId": "sg-023ce1c75d8977e65",
+                                    "GroupName": "onprem-router-sg"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "MacAddress": "02:18:85:34:e2:89",
+                            "NetworkInterfaceId": "eni-02bfc48357d43bffb",
+                            "OwnerId": "638892640336",
+                            "PrivateDnsName": "ip-172-16-0-70.us-east-2.compute.internal",
+                            "PrivateIpAddress": "172.16.0.70",
+                            "PrivateIpAddresses": [
+                                {
+                                    "Association": {
+                                        "IpOwnerId": "638892640336",
+                                        "PublicDnsName": "ec2-3-15-49-151.us-east-2.compute.amazonaws.com",
+                                        "PublicIp": "3.15.49.151"
+                                    },
+                                    "Primary": true,
+                                    "PrivateDnsName": "ip-172-16-0-70.us-east-2.compute.internal",
+                                    "PrivateIpAddress": "172.16.0.70"
+                                }
+                            ],
+                            "SourceDestCheck": false,
+                            "Status": "in-use",
+                            "SubnetId": "subnet-0cc3c0747d01aacf1",
+                            "VpcId": "vpc-0af1e93b0e283ee74",
+                            "InterfaceType": "interface",
+                            "Operator": {
+                                "Managed": false
+                            }
+                        }
+                    ],
+                    "RootDeviceName": "/dev/sda1",
+                    "RootDeviceType": "ebs",
+                    "SecurityGroups": [
+                        {
+                            "GroupId": "sg-023ce1c75d8977e65",
+                            "GroupName": "onprem-router-sg"
+                        }
+                    ],
+                    "SourceDestCheck": false,
+                    "Tags": [
+                        {
+                            "Key": "Project",
+                            "Value": "HybridNetwork"
+                        },
+                        {
+                            "Key": "ManagedBy",
+                            "Value": "Terraform"
+                        },
+                        {
+                            "Key": "Environment",
+                            "Value": "Portfolio"
+                        },
+                        {
+                            "Key": "Name",
+                            "Value": "OnPrem-VPN-Router"
+                        }
+                    ],
+                    "VirtualizationType": "hvm",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 2
+                    },
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpTokens": "required",
+                        "HttpPutResponseHopLimit": 2,
+                        "HttpEndpoint": "enabled",
+                        "HttpProtocolIpv6": "disabled",
+                        "InstanceMetadataTags": "disabled"
+                    },
+                    "EnclaveOptions": {
+                        "Enabled": false
+                    },
+                    "BootMode": "uefi-preferred",
+                    "PlatformDetails": "Linux/UNIX",
+                    "UsageOperation": "RunInstances",
+                    "UsageOperationUpdateTime": "2026-04-26T07:08:21+00:00",
+                    "PrivateDnsNameOptions": {
+                        "HostnameType": "ip-name",
+                        "EnableResourceNameDnsARecord": false,
+                        "EnableResourceNameDnsAAAARecord": false
+                    },
+                    "MaintenanceOptions": {
+                        "AutoRecovery": "default",
+                        "RebootMigration": "default"
+                    },
+                    "CurrentInstanceBootMode": "uefi",
+                    "NetworkPerformanceOptions": {
+                        "BandwidthWeighting": "default"
+                    },
+                    "Operator": {
+                        "Managed": false
+                    },
+                    "InstanceId": "i-029ffda9a63df889e",
+                    "ImageId": "ami-0eab37cfdc33e8e65",
+                    "State": {
+                        "Code": 16,
+                        "Name": "running"
+                    },
+                    "PrivateDnsName": "ip-172-16-0-70.us-east-2.compute.internal",
+                    "PublicDnsName": "ec2-3-15-49-151.us-east-2.compute.amazonaws.com",
+                    "StateTransitionReason": "",
+                    "KeyName": "portfolio-key",
+                    "AmiLaunchIndex": 0,
+                    "ProductCodes": [],
+                    "InstanceType": "t3.small",
+                    "LaunchTime": "2026-04-26T07:08:21+00:00",
+                    "Placement": {
+                        "AvailabilityZoneId": "use2-az1",
+                        "GroupName": "",
+                        "Tenancy": "default",
+                        "AvailabilityZone": "us-east-2a"
+                    },
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "SubnetId": "subnet-0cc3c0747d01aacf1",
+                    "VpcId": "vpc-0af1e93b0e283ee74",
+                    "PrivateIpAddress": "172.16.0.70",
+                    "PublicIpAddress": "3.15.49.151"
+                }
+            ]
+        }
+    ]
+}
+
+
+sudo apt update
+sudo apt install - y strongswan libcharon - extra - plugins charon - systemd
+
+
+
+
+sudo swanctl--version
+
+sudo mkdir -p /etc/swanctl/conf.d
+sudo nano /etc/swanctl/conf.d/aws-vpn.conf
+上書き保存　　　　　	Ctrl + S
+
+sudo swanctl--load - all
+
+
+sudo swanctl--list - sas
+
+sudo swanctl--initiate--child net - 1
+
+
+# 接続をクリアする
+sudo swanctl--terminate--ike aws-vpn-1
+
+# strongSwanサービス自体を停止する
+sudo systemctl stop strongswan-swanctl
+
+
+ping -c 4 169.254.49.225
+ping -c 4 169.254.233.32
+
+ssh -i "my-portfolio-key" ubuntu@3.15.49.151
+
+
+sudo ipsec restart
+sudo ipsec status
+
+sudo vim /etc/ipsec.conf
+sudo vim /etc/ipsec.secrets
+
+sudo tcpdump -i any -n icmp
+
+sudo tcpdump -i vti1 -n icmp
+sudo tcpdump -i any -n udp port 500
+sudo tcpdump -i any -n udp port 500 or udp port 4500
+
+sudo swanctl --load-all
+sudo systemctl restart strongswan-swanctl
+sudo swanctl --initiate --child vti-t1
+sudo swanctl --initiate --child vti-t2
+sudo swanctl --list-sas
+
+sudo ip xfrm state | grep -A 5 "src 3.129.118.107"
+
+ip route
+sudo ip route delete 169.254.49.225/32 dev ens5
+sudo ip route add 169.254.49.225/32 dev vti-t1 src 172.16.0.122
+sudo ip route add 169.254.233.32/32 dev vti-t2 src 172.16.0.122
+
+
+sudo ip route add 3.129.118.0/16 dev vti-t1
+sudo ip route add 3.129.118.0/16 dev vti-t1
+
+3.129.118.107
+
+
+# 1. VTIインターフェースを作成
+# local: 自分のプライベートIP / remote: AWS側のVPNエンドポイントIP
+sudo ip tunnel add vti-t1 mode vti local 172.16.0.122 remote 3.129.118.107 key 10
+
+# 2. インターフェースを起動
+sudo ip link set vti-t1 up
+
+# 3. MTUの設定 (VPNのオーバーヘッドを考慮して小さめに設定)
+sudo ip link set vti-t1 mtu 1419
+sudo ip route add 3.129.118.0/24 dev vti-t1
+
+
+ssh -i "my-portfolio-key" ubuntu@3.15.49.151
+
+
+
+
+sudo ip route add 10.0.1.0/24 dev vti-t1
+sudo ip route add 10.0.1.0/24 dev vti-t2
+
+ping -I 172.16.0.223 10.0.1.83
+
+sudo ip xfrm policy

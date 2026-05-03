@@ -58,11 +58,19 @@ resource "aws_iam_role" "developer_role" {
   # （今回はテスト用として、EC2がこのロールを引き受けられるように設定）
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = { Service = "ec2.amazonaws.com" }
-    }]
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = { Service = "ec2.amazonaws.com" }
+      },
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        # 自分のAWSアカウントからのスイッチを許可する
+        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
+      }
+    ]
   })
 
   # 【見せ場】このロールには、必ず上記の「境界線（Boundary）」がセットされる

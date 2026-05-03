@@ -113,3 +113,5 @@ __pycache__/
 *.tmp
 *~
 commit.bat
+
+02-kubernetes-basic/

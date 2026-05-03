@@ -1,0 +1,39 @@
+sudo vtysh
+configure terminal
+
+router bgp 65000
+ bgp router-id 169.254.49.226
+ timers bgp 6 20
+ neighbor 169.254.49.225 remote-as 64512
+ neighbor 169.254.49.225 update-source 169.254.49.226
+ neighbor 169.254.233.33 remote-as 64512
+ neighbor 169.254.233.33 update-source 169.254.233.34
+ !
+ address-family ipv4 unicast
+  network 169.254.49.224/30
+  network 169.254.233.32/30
+  redistribute connected
+  neighbor 169.254.49.225 soft-reconfiguration inbound
+  neighbor 169.254.49.225 route-map ALLOW_ALL in
+  neighbor 169.254.49.225 route-map ALLOW_ALL out
+  neighbor 169.254.49.225 advertise-map ALLOW_ALL exist-map ALLOW_ALL
+  neighbor 169.254.233.33 soft-reconfiguration inbound
+  neighbor 169.254.233.33 route-map ALLOW_ALL in
+  neighbor 169.254.233.33 route-map ALLOW_ALL out
+  neighbor 169.254.233.33 advertise-map ALLOW_ALL exist-map ALLOW_ALL
+ exit-address-family
+exit
+!
+ip prefix-list ANY seq 5 permit 0.0.0.0/0 le 32
+!
+route-map ALLOW_ALL permit 10
+ match ip address prefix-list ANY
+exit
+!
+end
+
+write memory
+exit
+
+
+route-map / prefix-list / filter が適用

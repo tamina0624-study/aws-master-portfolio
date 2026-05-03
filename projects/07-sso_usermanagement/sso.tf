@@ -14,7 +14,7 @@ resource "aws_identitystore_user" "dev_user" {
     family_name = "xxxxxx"
   }
   emails {
-    value   = "xxxxx.g.xxxxxx@xxxx.cam"
+    value   = "xxxxx.g.xxxxxx@xxx.xxx"
     primary = true
   }
 }

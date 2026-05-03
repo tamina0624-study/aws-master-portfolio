@@ -26,8 +26,9 @@ repos:
     hooks:
       - id: block-env-files
         name: Block .env files
-        entry: py block_env.py
+        entry: py block_secret.py
         language: system
+        args: ["--mode", "env"]
 
   # =========================
   # ■ Prevent committing Secret folders
@@ -36,43 +37,49 @@ repos:
         name: Block Secret folders
         entry: py block_secret.py
         language: system
+        args: ["--mode", "secret"]
 
   # =========================
   # ■ 個人メール検知（強め）
   # =========================
       - id: block-personal-email
         name: Block personal email
-        entry: py block_personal_email.py
+        entry: py block_secret.py
         language: system
+        args: ["--mode", "personal_email"]
 
   # =========================
   # ■ 自分の名前（ローカル専用）
   # =========================
       - id: block-my-name
         name: Block my name
-        entry: py block_my_name.py
+        entry: py block_secret.py
         language: system
+        args: ["--mode", "my_name"]
 
   # =========================
   # ■ 会社名
   # =========================
       - id: block-company
         name: Block company name
-        entry: py block_company.py
+        entry: py block_secret.py
         language: system
+        args: ["--mode", "company"]
 
   # =========================
   # ■ Windowsパス検知
   # =========================
       - id: block-windows-path
         name: Block local path
-        entry: py block_windows_path.py
+        entry: py block_secret.py
         language: system
+        args: ["--mode", "windows_path"]
 
   # =========================
   # ■ ログ集約・重複排除
   # =========================
       - id: block-log-aggregator
         name: Block log aggregator
-        entry: py block_log_aggregator.py
+        entry: py block_secret.py
         language: system
+        args: ["--mode", "log_aggregator"]

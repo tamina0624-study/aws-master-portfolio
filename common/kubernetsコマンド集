@@ -4,16 +4,16 @@ minikube start
 
 ■kubernetsコマンド
 #アプリの「実行状態」を管理。ポッドの数やアップデート戦略を定義します。
-kubectl apply -f nginx-deployment.yaml
+kubectl apply -f manifests/nginx-deployment.yaml
 
 #「窓口」の作成。外部や他のポッドからnginxにアクセスするための通信経路を作ります。
-kubectl apply -f nginx-service.yaml
+kubectl apply -f manifests/nginx-service.yaml
 
 #最も小さな単位である「コンテナの集合体」を直接起動します（テスト用が多い）。
 kubectl apply -f manifests/nginx-pod.yaml
 
 #設定値や環境変数を定義。アプリ本体と設定を切り離して管理します。
-kubectl apply -f nginx-config.yaml
+kubectl apply -f manifests/nginx-config.yaml
 
 kubectl apply -f manifests/nginx-ingress.yaml
 
@@ -27,7 +27,7 @@ kubectl get ingress
 kubectl get pods
 
 # kubernets 親 に機密情報を登録する
-kubectl create secret generic mysql-pass --from-literal=password='XXXXXXXX'
+kubectl create secret generic mysql-pass --from-literal=password='xxxxxxx'
 
 #Docker Desktop 上で Minikube を動かしている場合、
 #Minikube 内部の IP（192.168.xx.xx）には Windows から直接手が届きません。
@@ -35,7 +35,16 @@ kubectl create secret generic mysql-pass --from-literal=password='XXXXXXXX'
 #Minikube 内部へ橋（トンネル）を架けてくれます。
 minikube service ingress-nginx-controller -n ingress-nginx
 
+#本番用ローカルPCのセキュリティなどで引っ掛かりやすいらしい
 minikube tunnel
+
+
+#一回全部消して作り直し
+# 今のディレクトリにある定義をすべて削除
+kubectl delete -f ./manifests/
+
+# 再度すべてを適用
+kubectl apply -f ./manifests/
 
 
 --work space-------------------------------------------------------------------------------
@@ -43,3 +52,5 @@ nginx-deployment-995c5556f-29w4z
 
 kubectl apply -f backend-api.yaml
 kubectl apply -f nginx-ingress.yaml
+
+kubectl describe pod nginx-deployment-667654d89d-q9ch2

@@ -15,6 +15,19 @@ spec:
       containers:
       - name: echo-server
         image: hashicorp/http-echo  # 指定した文字を返すだけの便利な軽量イメージ
+        # --- ここを追加 ---
+        livenessProbe:
+          httpGet:
+            path: /           # トップページにアクセスできるか確認
+            port: 80
+          initialDelaySeconds: 5 # 起動後5秒待ってから開始
+          periodSeconds: 15      # 15秒おきにチェック
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 2
+          periodSeconds: 5
         args:
           - "-text=Hello API! This is the frontend Service."
         ports:

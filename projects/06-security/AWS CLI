@@ -1,0 +1,42 @@
+sg-053eb11101060337e
+
+aws configservice describe-remediation-configurations `
+    --config-rule-names "restricted-port-3820-check" `
+    --query "RemediationConfigurations[*].{ConfigRuleName:ConfigRuleName, TargetId:TargetId, Automatic:Automatic}" --region us-east-2
+
+
+aws configservice describe-remediation-execution-status `
+    --config-rule-name "restricted-port-3820-check" `
+    --query "RemediationExecutionStatuses[*].{ResourceId:ResourceKey.ResourceId, State:State, Step:LastStep.Name, ErrorMessage:LastStep.ErrorMessage}" --region us-east-2
+
+aws ssm describe-automation-executions `
+    --filters "Key=DocumentName,Values=Custom-RevokeSecurityGroup3820" `
+    --query "AutomationExecutionMetadataList[*].{ID:AutomationExecutionId, Status:AutomationExecutionStatus, Start:ExecutionStartTime}" --region us-east-2
+
+
+aws configservice start-remediation-execution `
+    --config-rule-name "restricted-port-3820-check" `
+    --resource-keys "ResourceType=AWS::EC2::SecurityGroup,ResourceId=sg-053eb11101060337e" `
+    --region us-east-2
+
+#アカウント名の取得
+aws sts get-caller-identity --query Account --output text
+
+aws s3 ls s3://config-logs-portfolio-20260430124343879700000001/AWSLogs/63xxxxxxx0336/Config/
+
+
+
+aws guardduty create-sample-findings --detector-id 70c41992c98dcbb60a5ff52316c0d774 --finding-types Recon:EC2/PortProbeUnprotectedPort --region us-east-2
+
+
+aws guardduty list-findings --detector-id 70c41992c98dcbb60a5ff52316c0d774 --region us-east-2
+{
+    "FindingIds": [
+        "ac42a3d0318549c3b7de6fed6e6ff964",
+        "9ecee66d76594e1a3d16e6826158b060",
+        "b4cee1ab04526d1ec311cf1a8167a695",
+        "faceb37fd21f3d7291eb80cff4a48d34"
+    ]
+}
+
+aws guardduty get-findings --detector-id faceb37fd21f3d7291eb80cff4a48d34 --finding-ids b4cee1ab04526d1ec311cf1a8167a695 --region us-east-2

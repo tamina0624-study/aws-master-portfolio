@@ -1,0 +1,134 @@
+1. 統制（ガードレール）の構築：AWS Organizations & SCP
+実務で「全冠」エンジニアに期待されるのは、1つのアカウントを完璧にすることではなく、「100個のアカウントが作られても、誰もセキュリティ事故を起こせない仕組み」を作ることです。
+
+実装タスク：
+TerraformによるOrganizationのコード化:
+
+OU（組織単位）を作成し、Security, Workloads (Development/Production) のように分割します。
+
+SCP（サービスコントロールポリシー）の適用:
+
+リージョン制限: 東京（ap-northeast-1）とバージニア（us-east-1）以外でのリソース作成を禁止する。
+
+特権保護: IAMユーザーの作成を禁止（IAM Identity Centerへの強制）や、CloudTrailの停止を禁止する。
+
+2. 自動修正（Remediation）の実装：AWS Config
+「設定ミスを見つける」だけでなく「即座に直す」のがプロの仕事です。
+
+実装タスク：
+AWS Config ルールのデプロイ:
+
+s3-bucket-public-read-prohibited（S3の公開禁止）
+
+restricted-common-ports（22番や3389番ポートの全開放禁止）
+
+Systems Manager (SSM) Automation による自動修復:
+
+非準拠のリソースを検知したら、LambdaまたはSSM Documentをキックして、バケットポリシーを自動で「プライベート」に書き換える仕組みを構築してください。
+
+3. ID・アクセス管理のモダン化：IAM Identity Center
+「IAMユーザー」は卒業しましょう。実務ではSSOが標準です。
+
+実装タスク：
+Terraformでの Permission Sets 定義:
+
+AdministratorAccess（管理者用）
+
+ReadOnlyAccess（監査用）
+
+Custom-NetworkAdmin（ネットワーク管理に特化した最小権限）
+
+職務分掌（SoD）のドキュメント化:
+
+なぜこの権限セットにしたのか、設計思想をREADMEに記載してください。
+
+
+素晴らしいポートフォリオ戦略ですね。すでに「ハイブリッド接続の冗長化（Yamaha RTX × AWS）」という、インフラエンジニアとして最も「現場感」が出るパートを完了されているのは大きなアドバンテージです。物理と仮想の境界を実機で突破した経験は、面接での説得力が格段に違います。
+
+それでは、次のステップである「セキュリティ：単なる検知ではなく『統制（ガードレール）』」および「ID・アクセス管理」のフェーズへ進みましょう。
+
+このステップでは、「個別の設定」から「組織全体の統制」へと視点を引き上げる必要があります。以下の手順で進めることを提案します。
+
+1. 統制（ガードレール）の構築：AWS Organizations & SCP
+実務で「全冠」エンジニアに期待されるのは、1つのアカウントを完璧にすることではなく、「100個のアカウントが作られても、誰もセキュリティ事故を起こせない仕組み」を作ることです。
+
+実装タスク：
+TerraformによるOrganizationのコード化:
+
+OU（組織単位）を作成し、Security, Workloads (Development/Production) のように分割します。
+
+SCP（サービスコントロールポリシー）の適用:
+
+リージョン制限: 東京（ap-northeast-1）とバージニア（us-east-1）以外でのリソース作成を禁止する。
+
+特権保護: IAMユーザーの作成を禁止（IAM Identity Centerへの強制）や、CloudTrailの停止を禁止する。
+
+2. 自動修正（Remediation）の実装：AWS Config
+「設定ミスを見つける」だけでなく「即座に直す」のがプロの仕事です。
+
+実装タスク：
+AWS Config ルールのデプロイ:
+
+s3-bucket-public-read-prohibited（S3の公開禁止）
+
+restricted-common-ports（22番や3389番ポートの全開放禁止）
+
+Systems Manager (SSM) Automation による自動修復:
+
+非準拠のリソースを検知したら、LambdaまたはSSM Documentをキックして、バケットポリシーを自動で「プライベート」に書き換える仕組みを構築してください。
+
+3. ID・アクセス管理のモダン化：IAM Identity Center
+「IAMユーザー」は卒業しましょう。実務ではSSOが標準です。
+
+実装タスク：
+Terraformでの Permission Sets 定義:
+
+AdministratorAccess（管理者用）
+
+ReadOnlyAccess（監査用）
+
+Custom-NetworkAdmin（ネットワーク管理に特化した最小権限）
+
+職務分掌（SoD）のドキュメント化:
+
+なぜこの権限セットにしたのか、設計思想をREADMEに記載してください。
+
+💡 このフェーズの「学習のツボ」と「アピールポイント」
+学習を進める際、以下の「躓きポイント」を意識して、解決過程をメモしておいてください。
+
+① 「Organization × Terraform」の鶏と卵問題
+TerraformでOrganizationを管理しようとすると、マスターアカウントの認証情報をどう扱うか、という問題に直面します。
+
+アピール: 「Securityアカウントから他アカウントへどうAssumeRole（ロール引き受け）して構築を自動化したか」は、マルチアカウント運用の核心です。
+
+② SCPの影響範囲のデバッグ
+SCPは強力すぎて、設定をミスると自分自身（管理者）もリソースを削除できなくなります。
+
+アピール: 「例外的に特定の管理ロールだけは制限から除外する Condition 句の書き方」を理解していると、実務レベルの知識として高く評価されます。
+
+
+追加提案1：Amazon GuardDuty × Lambda による「自律防御システム」
+AWS Configが「設定の不備」を直すものなら、GuardDutyは「進行中の攻撃」を防ぐものです。
+
+シナリオ: 外部からEC2やIAMに対してブルートフォース攻撃（総当たり攻撃）や不審な通信が発生。
+
+実装内容:
+
+GuardDutyが脅威を検知。
+
+EventBridgeがその検知をトリガーにLambdaを起動。
+
+Lambdaが攻撃元IPアドレスを特定し、AWS WAFやNetwork ACLの拒否リストに自動登録。
+
+インパクト: 「24時間365日、エンジニアが寝ている間もシステムが勝手に身を守る」というストーリーは、運用自動化の文脈で非常に評価が高いです。
+
+🏗️ 追加提案2：IAM Roles Anywhere を活用した「脱・IAMユーザー」
+物理環境（Yamahaルーター側など）からAWSを操作する際、アクセスキーを発行していませんか？
+
+シナリオ: オンプレミスのサーバーやルーターからAWS CLI等を実行したいが、アクセスキーの漏洩リスクをゼロにしたい。
+
+実装内容: IAM Roles Anywhere を導入。
+
+自前の認証局（Private CA）の発行した証明書を使って、一時的な認証情報を取得する仕組み。
+
+インパクト: 「アクセスキーの運用管理（ローテーション等）という負債を技術で解決した」という実績になります。これはSCS（Security Specialty）の知識を最高レベルでアウトプットした例になります。

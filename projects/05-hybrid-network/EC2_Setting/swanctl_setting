@@ -66,10 +66,10 @@ connections {
 secrets {
     ike-aws-t1 {
         id-1 = 3.18.50.193
-        secret = "xxxxxxxxx"
+        secret = "XXXXXXXXX"
     }
     ike-aws-t2 {
         id-2 = 18.221.57.88
-        secret = "xxxxxxx_l"
+        secret = "XXXXXXXXX"
     }
 }

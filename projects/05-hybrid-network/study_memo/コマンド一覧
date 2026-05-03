@@ -9,7 +9,7 @@ aws ec2 describe - instances--region us - east - 2
     "Reservations": [
         {
             "ReservationId": "r-0bce0fce04aa69baa",
-            "OwnerId": "638892640336",
+            "OwnerId": "63xxxxxxx0336",
             "Groups": [],
             "Instances": [
                 {
@@ -54,7 +54,7 @@ aws ec2 describe - instances--region us - east - 2
                             "Ipv6Addresses": [],
                             "MacAddress": "02:dc:6a:8a:d7:c3",
                             "NetworkInterfaceId": "eni-029ab87a72fe83cab",
-                            "OwnerId": "638892640336",
+                            "OwnerId": "63xxxxxxx0336",
                             "PrivateIpAddress": "10.0.1.83",
                             "PrivateIpAddresses": [
                                 {
@@ -166,7 +166,7 @@ aws ec2 describe - instances--region us - east - 2
         },
         {
             "ReservationId": "r-02bb4d3c3a0a1424f",
-            "OwnerId": "638892640336",
+            "OwnerId": "63xxxxxxx0336",
             "Groups": [],
             "Instances": [
                 {
@@ -267,7 +267,7 @@ aws ec2 describe - instances--region us - east - 2
         },
         {
             "ReservationId": "r-0f841f2fbbf17212a",
-            "OwnerId": "638892640336",
+            "OwnerId": "63xxxxxxx0336",
             "Groups": [],
             "Instances": [
                 {
@@ -290,7 +290,7 @@ aws ec2 describe - instances--region us - east - 2
                     "NetworkInterfaces": [
                         {
                             "Association": {
-                                "IpOwnerId": "638892640336",
+                                "IpOwnerId": "63xxxxxxx0336",
                                 "PublicDnsName": "ec2-3-15-49-151.us-east-2.compute.amazonaws.com",
                                 "PublicIp": "3.15.49.151"
                             },
@@ -312,13 +312,13 @@ aws ec2 describe - instances--region us - east - 2
                             "Ipv6Addresses": [],
                             "MacAddress": "02:18:85:34:e2:89",
                             "NetworkInterfaceId": "eni-02bfc48357d43bffb",
-                            "OwnerId": "638892640336",
+                            "OwnerId": "63xxxxxxx0336",
                             "PrivateDnsName": "ip-172-16-0-70.us-east-2.compute.internal",
                             "PrivateIpAddress": "172.16.0.70",
                             "PrivateIpAddresses": [
                                 {
                                     "Association": {
-                                        "IpOwnerId": "638892640336",
+                                        "IpOwnerId": "63xxxxxxx0336",
                                         "PublicDnsName": "ec2-3-15-49-151.us-east-2.compute.amazonaws.com",
                                         "PublicIp": "3.15.49.151"
                                     },

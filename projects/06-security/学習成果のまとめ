@@ -1,0 +1,72 @@
+---
+#タイトル
+Terraformで学ぶAWSセキュリティ自動化とゼロトラスト運用構築
+
+
+
+#今回学習した内容
+
+## 1. AWS Configによるセキュリティグループ監査と自動修復
+
+- `aws_config_config_rule`で「特定ポート（例: 3820）」の開放を禁止するルールを作成。
+- `aws_ssm_document`で、違反セキュリティグループの該当ポートを自動で閉じるAutomationドキュメントを定義。
+- `aws_config_remediation_configuration`で、Configルール違反時にSSM Automationを自動実行する設定を構成。
+- `aws_iam_role`と`aws_iam_role_policy`で、SSM Automationが必要な権限（RevokeSecurityGroupIngress等）を持つロールを作成。
+
+---
+
+## 2. GuardDuty × Lambdaによる自律防御システム
+
+- `aws_cloudwatch_event_rule`でGuardDutyのFindingイベントを検知するEventBridgeルールを作成。
+- `aws_lambda_function`で攻撃元IPをWAFやNACLに自動登録するLambda関数を用意（サンプルではWAF IPセットの自動更新）。
+- `aws_iam_role`と`aws_iam_role_policy`で、LambdaがWAFやNACLを操作できる権限を付与。
+- `aws_cloudwatch_event_target`でEventBridgeルールとLambdaを紐付け。
+
+---
+
+## 3. IAM Roles Anywhereによる「脱・IAMユーザー」構成
+
+- `aws_rolesanywhere_trust_anchor`で自前CA証明書をTrust Anchorとして登録。
+- `aws_iam_role`でRoles Anywhere用のAssumeRole可能なIAMロールを作成。
+- `aws_rolesanywhere_profile`で、Trust AnchorとIAMロールを紐付けたProfileを作成。
+- オンプレミスから証明書認証＋aws_signing_helperで一時的な認証情報を取得し、AWS CLI操作を実現。
+
+---
+
+#ゼロトラストとして意識した点
+1. IAM Roles Anywhereによる「脱・IAMユーザー」
+アクセスキーを使わず、証明書ベースの一時的な認証情報でAWS操作を実現
+オンプレミス環境からも「信頼できる証明書がある場合のみ」アクセスを許可
+最小権限ロールを都度払い出すことで、恒久的な認証情報を持たない運用
+2. GuardDuty × Lambdaによる自律防御
+ネットワークやリソースへのアクセスを常時監視し、異常検知時は自動で遮断
+攻撃元IPを即時ブロックし、「信頼できない通信は即座に排除」する仕組み
+3. AWS Configによる継続的な設定監査と自動修復
+設定ミスや逸脱を自動検知し、即時に是正
+「一度許可したからずっと信頼」ではなく、常に状態を監査・修正
+これらは「常に検証・最小権限・動的な信頼・自動修復」というゼロトラストの基本思想に合致します。
+特に「恒久的な信頼を置かず、都度認証・都度監査・都度修復する」点がゼロトラストの本質です。
+
+
+
+## 4. 振り返り
+-権限不足やlinux環境を前提としたアプリの対応に苦労しました。
+また、関連アプリがC言語をビルドしなければインストールできず、C言語のビルド時間の長さに憂鬱になりました。
+前回の反省を踏まえて、ちょっと全体像が見えなくなったら
+仕組みを整理しながら対応を進めたので
+大きなハマりは無かった気がします。
+最終的にAIに頼り切らずに
+公式ドキュメントを確認し必要な権限を確認したのが
+大きかったと思います。
+
+---
+
+## 5. まとめ
+
+今回は、
+- AWS Configによる違反検知と自動修復
+- GuardDuty × Lambdaによるリアルタイム自律防御
+- IAM Roles Anywhereによる安全なオンプレ認証
+
+をTerraformで一元管理し、実践・検証しました。
+一部権限や証明書設定で詰まる場面もありましたが、都度修正しながらセキュリティ自動化のベストプラクティスを体験できました。

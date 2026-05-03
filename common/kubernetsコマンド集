@@ -27,7 +27,7 @@ kubectl get ingress
 kubectl get pods
 
 # kubernets 親 に機密情報を登録する
-kubectl create secret generic mysql-pass --from-literal=password='XXXXXX'
+kubectl create secret generic mysql-pass --from-literal=password='XXXXXXXX'
 
 #Docker Desktop 上で Minikube を動かしている場合、
 #Minikube 内部の IP（192.168.xx.xx）には Windows から直接手が届きません。

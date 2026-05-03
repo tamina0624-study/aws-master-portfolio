@@ -1,0 +1,97 @@
+# 学習ログ：TerraformによるAWS Kubernetes環境構築（K3s & EKS）
+
+## 1. 学習の目的
+* Terraformを使用したAWSインフラ構築の実践力を高める。
+* Kubernetes（K8s）を「自前構築（EC2）」と「マネージド（EKS）」の両面から理解する。
+* 実務で発生しうるインフラエラーのトラブルシューティング能力を養う。
+
+## 2. 実施内容
+
+### ステップA：EC2上でのK3s構築（セルフマネージド練習）
+* **概要**: EC2インスタンスの `user_data` を利用し、起動時に自動で K3s クラスターを構成。
+* **実施事項**:
+    * Terraformでの EC2 / Security Group の定義。
+    * K3s インストールスクリプトの自動実行。
+    * `kubectl` の権限エラー（kubeconfigのパーミッション）の解決。
+    * **成果**: NodePortサービスを利用したNginxの外部公開。
+
+### ステップB：EKS（Elastic Kubernetes Service）の構築
+* **概要**: AWSのマネージドK8sサービスであるEKSをTerraformでフルスクラッチ構築。
+* **実施事項**:
+    * **IAMロール設計**: クラスター用およびノードグループ用のIAM Role/Policyのアタッチ。
+    * **ネットワーク拡張**: EKSの要件に基づき、VPCをシングルAZからマルチAZ（2つのサブネット）へ拡張。
+    * **EKSクラスター構成**: コントロールプレーンの作成。
+    * **マネージドノードグループ**: `t3.medium` インスタンスによるワーカーノードの自動展開。
+    * **成果**: LoadBalancerサービス（CLB/NLB）を介したNginxのインターネット公開。
+
+## 3. 環境の説明
+
+### ■ ローカル環境
+* VSCodeを使用して定義ファイルを作成し、Terraformを実行。
+* `kubectl` を使用してデプロイしたクラスターの操作を実施。
+
+### ■ AWS環境
+* **セルフマネージドK8s**: EC2上に軽量Kubernetesである **K3s** をインストールし、単一ノードで構築。
+* **マネージドK8s**: **EKS** 上にKubernetesクラスターを構築し、
+マネージドノードグループでワーカーノードを展開、Podを作成。
+
+### ■ 全体構成図
+詳細な構成については、同プロジェクト内の `architecture.html` をご参照ください。
+
+## 4. 解決した主なトラブルシューティング
+本日の構築中に直面し、解決した主なエラーと対策です。
+
+| エラー内容 | 原因 | 解決策 |
+| :--- | :--- | :--- |
+| **InvalidKeyPair.Duplicate** | 既存のキーペア名との衝突 | `terraform import` または名前の変更で対応。 |
+| **InvalidVpcID.NotFound** | リージョン設定の不一致 | `provider` ブロックの `region` をVPCが存在する場所に修正。 |
+| **Subnets must be in at least two AZs** | EKSの可用性制約 | VPCモジュールを修正し、別AZに2つ目のサブネットを追加。 |
+| **Ec2SubnetInvalidConfiguration** | パブリックIP自動割当が無効 | サブネットの `map_public_ip_on_launch` を `true` に設定。 |
+
+## 5. 習得した技術キーワード
+* **Terraform**: `module`, `output`, `variable`, `path.module`, `depends_on`, `import`
+* **AWS**: EKS, IAM Role/Policy, Multi-AZ Networking, Security Group
+* **Kubernetes**: `kubectl`, `Deployment`, `Service (NodePort/LoadBalancer)`, `KUBECONFIG`
+
+## 6. 使用したコマンド集
+
+### ■ kubectl & EKS クラスタ操作
+```bash
+# kubectlを使えるようにするためのkubeconfig作成・更新
+aws eks update-kubeconfig --region us-east-2 --name portfolio-eks-cluster
+
+# ノードの状態確認
+kubectl get nodes
+
+# NginxのPodを1つ起動（Deployment作成）
+kubectl create deployment nginx-eks --image=nginx
+
+# Podの状態確認
+kubectl get pods
+
+# ServiceをLoadBalancerタイプで作成し、外部公開
+kubectl expose deployment nginx-eks --port=80 --type=LoadBalancer
+
+# Serviceの確認（発行されたELBのURL等を確認）
+kubectl get svc nginx-eks
+```
+
+### ■ 後片付け（リソース削除）
+> **⚠️ 警告**
+> EKSは起動しているだけで料金が発生し続けます（クラスター約$72/月 + インスタンス代等）。
+> 本日の学習が終わりましたら、以下の手順でリソースを必ず削除してください。
+
+```bash
+# 1. Kubernetes上のServiceを削除（これをしないとAWS上にELBが残って課金されます）
+kubectl delete svc nginx-eks
+
+# 2. Terraformでインフラ全体を削除
+terraform destroy
+```
+
+## 7. 振り返り
+特にプロジェクト全体をチェックするため、無料のAntigravityを導入しましたが、
+直し方を質問したらコードの修正まで始めてしまい、
+挙句実装のイメージが相当な力技だったので、細かい調査を行い修正を行いました。
+
+色々大変でしたが、Terraformの記法やKubernetesの仕組みをより深く理解することが出来た気がします。

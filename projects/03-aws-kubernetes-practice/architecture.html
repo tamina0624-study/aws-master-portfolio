@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Kubernetes Practice 物理構成図</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 95%;
+            margin: 0 auto;
+        }
+        .diagram-wrapper {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+        .mermaid {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .mermaid svg {
+            width: 100% !important;
+            max-width: 1600px !important;
+            height: auto !important;
+        }
+        .description-box {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            padding: 30px;
+            line-height: 1.8;
+        }
+        .description-box h2 {
+            color: #e67e22;
+            border-bottom: 2px solid #f39c12;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .description-box h3 {
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        ul {
+            margin-top: 0;
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        code {
+            background-color: #f1f2f6;
+            padding: 3px 6px;
+            border-radius: 4px;
+            color: #c0392b;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AWS Kubernetes Practice 物理・論理構成図</h1>
+
+        <div class="diagram-wrapper">
+            <pre class="mermaid">
+            flowchart TB
+                %% ローカル環境
+                subgraph LocalPC["💻 ローカルPC"]
+                    direction TB
+                    TF["Terraform\n(インフラ自動構築)"]
+                    Kubectl["kubectl\n(K8sクラスタ操作)"]
+                end
+
+                %% AWS クラウド環境
+                subgraph AWS["☁️ AWS Cloud"]
+                    IGW["🌐 Internet Gateway"]
+
+                    subgraph VPC["🔒 VPC (10.0.0.0/16)"]
+
+                        %% K3s 環境 と EKSノード1
+                        subgraph AZ_A["🏢 Availability Zone A (us-east-2a)"]
+                            subgraph Subnet_1["📶 Public Subnet 1 (10.0.1.0/24)"]
+
+                                subgraph K3s_EC2["🖥️ EC2 (t3.small) : K3s環境"]
+                                    subgraph K3s_Cluster["Kubernetes (K3s)"]
+                                        direction TB
+                                        K3s_CP["Control Plane\n(API Server, Scheduler)"]
+                                        K3s_Worker["Worker Components\n(kubelet, containerd)"]
+                                        K3s_Pod["📦 Pod (Nginx等)"]
+
+                                        K3s_CP --> K3s_Worker
+                                        K3s_Worker --> K3s_Pod
+                                    end
+                                end
+
+                                subgraph EKS_Node1["⚙️ EKS Worker Node 1 (EC2: t3.medium)"]
+                                    subgraph K8s_Node1["Kubernetes Components"]
+                                        Kubelet1["kubelet / kube-proxy"]
+                                        Pod1_1["📦 Pod (Nginx)"]
+                                        Pod1_2["📦 Pod (aws-node等)"]
+
+                                        Kubelet1 --> Pod1_1
+                                        Kubelet1 --> Pod1_2
+                                    end
+                                end
+                            end
+                        end
+
+                        %% EKSノード2
+                        subgraph AZ_B["🏢 Availability Zone B (us-east-2b)"]
+                            subgraph Subnet_2["📶 Public Subnet 2 (10.0.2.0/24)"]
+                                subgraph EKS_Node2["⚙️ EKS Worker Node 2 (EC2: t3.medium)"]
+                                    subgraph K8s_Node2["Kubernetes Components"]
+                                        Kubelet2["kubelet / kube-proxy"]
+                                        Pod2_1["📦 Pod (Nginx)"]
+
+                                        Kubelet2 --> Pod2_1
+                                    end
+                                end
+                            end
+                        end
+
+                        %% EKS Control Plane
+                        subgraph EKS_CP["🧠 EKS Control Plane (AWS Managed)"]
+                            direction TB
+                            K8sAPI["API Server"]
+                            ETCD["etcd (Key-Value Store)"]
+                            Controller["Controller Manager"]
+                            Scheduler["Scheduler"]
+
+                            K8sAPI --- ETCD
+                            K8sAPI --- Controller
+                            K8sAPI --- Scheduler
+                        end
+                    end
+                end
+
+                %% 接続関係
+                TF -- "1. EC2/EKSなどの\nAWSリソースを作成" --> IGW
+                Kubectl -- "2. Nginxなどの\nPodをデプロイ" --> IGW
+
+                IGW --> K8sAPI
+                IGW --> K3s_CP
+
+                K8sAPI -. "ノード/Podの管理・通信" .-> Kubelet1
+                K8sAPI -. "ノード/Podの管理・通信" .-> Kubelet2
+
+                %% スタイリング
+                style LocalPC fill:#f4f9f9,stroke:#00a8cc,stroke-width:2px,color:#333
+                style TF fill:#844FBA,stroke:#fff,color:#fff
+                style Kubectl fill:#326ce5,stroke:#fff,color:#fff
+
+                style AWS fill:#f9f9f9,stroke:#232f3e,stroke-width:2px,color:#232f3e
+                style VPC fill:#e0ffd4,stroke:#3b821d,stroke-width:2px,color:#000
+                style AZ_A fill:#fff,stroke:#ff9900,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+                style AZ_B fill:#fff,stroke:#ff9900,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+                style Subnet_1 fill:#e6f2ff,stroke:#005b9f,stroke-width:1px,color:#000
+                style Subnet_2 fill:#e6f2ff,stroke:#005b9f,stroke-width:1px,color:#000
+
+                style K3s_EC2 fill:#ffebcd,stroke:#e67e22,stroke-width:2px
+                style EKS_Node1 fill:#ffebcd,stroke:#e67e22,stroke-width:2px
+                style EKS_Node2 fill:#ffebcd,stroke:#e67e22,stroke-width:2px
+                style EKS_CP fill:#3f8624,stroke:#232f3e,color:#fff
+
+                style K8sAPI fill:#326ce5,color:#fff,stroke:#fff
+                style K3s_CP fill:#326ce5,color:#fff,stroke:#fff
+            </pre>
+        </div>
+
+        <div class="description-box">
+            <h2>📝 物理・論理コンポーネント構成の説明</h2>
+
+            <h3>💻 ローカルPC (操作元)</h3>
+            <ul>
+                <li><strong>Terraform</strong>: <code>terraform apply</code> を実行し、AWSのAPIを叩いてVPC、EC2、EKSクラスターなどの「物理的・インフラ的」なリソースを自動構築します。</li>
+                <li><strong>kubectl</strong>: 構築されたKubernetesのAPIサーバーと通信し、Nginxなどの「論理的」なリソース（Pod、Deployment、Serviceなど）を展開・管理します。</li>
+            </ul>
+
+            <h3>☁️ セルフマネージド構成 (K3s EC2)</h3>
+            <ul>
+                <li><strong>物理配置</strong>: パブリックサブネット1に配置された1台のEC2インスタンス（<code>t3.small</code>）です。</li>
+                <li><strong>K8s内部構造</strong>: 1台の中にコントロールプレーン（APIサーバー等）とワーカーノード機能（kubelet等）が同居しています。その内部に <code>Pod (Nginx)</code> がコンテナとして稼働しています。</li>
+            </ul>
+
+            <h3>🧠 マネージド構成 (Amazon EKS)</h3>
+            <ul>
+                <li><strong>EKS Control Plane (マスターノード)</strong>: AWSの管理下（見えないVPC領域）に配置されたコントロールプレーンです。APIリクエストを受け取る <code>API Server</code>、クラスタ状態を保存する <code>etcd</code> などの中核機能が動いています。</li>
+                <li><strong>EKS Worker Node (ワーカーノード)</strong>: 私たちのVPC（サブネット1と2）に配置された実体のEC2インスタンス（<code>t3.medium</code>）です。</li>
+                <li><strong>K8s内部構造</strong>: ワーカーノード内では <code>kubelet</code>（ノードの管理者）と <code>kube-proxy</code>（ネットワーク管理）が常駐し、コントロールプレーンからの指示を受けて <code>Pod (Nginx等)</code> を起動・維持しています。</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

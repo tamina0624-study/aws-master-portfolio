@@ -1,0 +1,59 @@
+■変数の参照がうまくいかない
+他モジュールのvariables.tfを簡単に参照する方法が無かった。
+インポートモジュールを親モジュールにして、子モジュールの必要な変数を全てアウトプットに入れる
+親モジュールでもアウトプットに入れる
+親モジュールのインポート先で参照が出来るようになる
+
+
+■keyが重複エラー
+
+解決策1：既存のキーペアをTerraformの管理下に置く（推奨）
+「すでにAWSにあるあの鍵を、今のプロジェクトでも使いたい」という場合です。コマンドひとつで、AWS上の情報を現在のTerraformの状態（tfstate）に取り込めます。
+
+以下のコマンドを実行してください：
+terraform import module.basic_infrastructure.module.compute.aws_key_pair.portfolio_key portfolio-key
+
+※ portfolio-key は、エラーメッセージにあるAWS上のキーペア名です。
+
+これで、Terraformが「あ、もうAWSにあるね。OK、今後は俺が管理するよ」と認識し、エラーが消えます。
+
+
+■セキュリティグループが作れない
+あるはずのVPCIDが参照できないと言われる
+teraformの最初にprovider設定でregionを設定しないと作業するリージョンが正しく設定できていなかったらしい
+
+
+
+
+
+
+■kubectl
+
+# kubectlを使えるようにするためのconfig作成
+aws eks update-kubeconfig --region us-east-2 --name portfolio-eks-cluster
+
+# ノードの確認
+kubectl get nodes
+
+# Nginxを1つ起動
+kubectl create deployment nginx-eks --image=nginx
+
+# 状態確認
+kubectl get pods
+
+# ServiceをLoadBalancerタイプで作成
+kubectl expose deployment nginx-eks --port=80 --type=LoadBalancer
+
+# Serviceの確認
+kubectl get svc nginx-eks
+
+
+■後片付け
+EKSは起動しているだけで料金が発生し続けます
+（クラスター約$72/月 + インスタンス代）。
+本日の学習が終わりましたら、以下の手順でリソースを削除することを強く推奨します。
+# 1. サービスを削除（これをしないとELBが残って課金されます）
+kubectl delete svc nginx-eks
+
+# 2. Terraformでインフラ全体を削除
+terraform destroy

@@ -20,3 +20,7 @@ cd リポジトリ.git
 git filter-repo --path <削除したいファイルのgitpath> --invert-paths
 git push --force --all
 git push --force --tags
+
+
+#セキュリティ検知を有効にする
+py -m pre_commit install

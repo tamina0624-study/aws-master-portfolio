@@ -112,3 +112,4 @@ __pycache__/
 *.bak
 *.tmp
 *~
+commit.bat

@@ -1,0 +1,92 @@
+【GuardDuty】
+region: us-east-2
+
+【EventBridge】
+rulename: hcsa-eventbridge-guardduty-finding-to-lambda
+region: us-east-2
+eventbusName: default
+eventtargets:
+	- block_attacker_ip_port (Lambda)
+filterrule:
+	- UnauthorizedAccess（不正アクセス）
+	- Recon（偵察行為）
+	- Backdoor（バックドア検知）
+	- CryptoCurrency（仮想通貨マイニング）
+	- Impact（破壊・改ざん行為）
+	- Persistence（永続化の試み）
+	- PenTest（ペネトレーションテスト検知）
+	- Behavior（異常なふるまい）
+	- Trojan（マルウェア検知）
+
+
+# EventBridgeルールのフィルター例（GuardDuty Finding Typeで絞り込み）
+#
+# {
+#   "source": ["aws.guardduty"],
+#   "detail-type": ["GuardDuty Finding"],
+#   "detail": {
+#     "type": [
+#       "UnauthorizedAccess*",
+#       "Recon*",
+#       "Trojan*",
+#       "Backdoor*",
+#       "CryptoCurrency*",
+#       "Impact*",
+#       "Persistence*",
+#       "PenTest*",
+#       "Behavior*"
+#     ]
+#   }
+# }
+
+
+【Lambda（攻撃元IPブロック）】
+name: hcsa-lambda-block_attacker_ip_port
+region: us-east-2
+runtime: python3.8
+handler: lambda_function.lambda_handler
+timeout: 3s
+memory: 128mb
+trigger: EventBridge: guardduty-finding-to-lambda
+execRole: hcsa-lambda-role
+
+■ACL
+【prod-hcsa-vpc-acl】
+inbound-rule
+deny deny-ipset all
+permit allow-ipset all
+
+outbound-rule
+deny deny-ipset all
+permit allow-ipset all
+
+【onprem-hcsa-vpc-acl】
+inbound-rule
+deny deny-ipset all
+permit allow-ipset all
+
+outbound-rule
+deny deny-ipset all
+permit allow-ipset all
+
+■security group
+【prod-hcsa-vpc-sg】
+inbound-rule
+allow-ipset all
+
+outbound-rule
+allow-ipset all
+
+【onprem-hcsa-vpc-sg】
+inbound-rule
+allow-ipset all
+
+outbound-rule
+allow-ipset all
+
+【prod-hcsa-vpc-rds-sg】
+inbound-rule
+prod-hcsa-vpc-sg 3306
+
+outbound-rule
+allow-ipset all

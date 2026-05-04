@@ -1,0 +1,61 @@
+# タグ設計例（ネットワーク設計に基づく）
+
+## 1. 共通タグ（全リソースに付与）
+
+- Name：hcsa-<用途>-<環境>-<連番>（例：hcsa-vpc-prod-01）
+- Project：Hybrid-Cloud-Connectivity-and-Security-Automation
+- Environment：dev / stg / prod
+- Owner：dev-user1
+- ManagedBy：Terraform
+
+## 2. 用途別・推奨タグ
+
+- CostCenter：it-dept / infra-migration など
+- SecurityLevel：public / internal / confidential / restricted
+- Application：app-server / db-server / routerpc など
+- CreatedDate：2026-05-04
+
+---
+
+## 3. サブネット・VPC・主要リソースへのタグ例
+
+### AWS側VPC
+```hcl
+tags = {
+  Name        = "hcsa-vpc-prod-01"
+  Project     = "Hybrid-Cloud-Connectivity-and-Security-Automation"
+  Environment = "prod"
+  Owner       = "your-team"
+  ManagedBy   = "Terraform"
+  CostCenter  = "it-dept"
+  SecurityLevel = "internal"
+}
+```
+
+### サブネット
+- パブリックサブネット1: Name = "hcsa-public-1-prod"
+- パブリックサブネット2: Name = "hcsa-public-2-prod"
+- プライベートサブネット1: Name = "hcsa-private-1-prod"
+- プライベートサブネット2: Name = "hcsa-private-2-prod"
+
+### 疑似オンプレVPC
+- Name = "onprem-hcsa-vpc"
+- Environment = "dev"（またはstg等）
+
+### EC2（例: アプリケーションサーバ）
+- Name = "hcsa-appserver-prod-01"
+- Application = "app-server"
+- SecurityLevel = "internal"
+
+### RDS
+- Name = "hcsa-rds-prod-01"
+- SecurityLevel = "confidential"
+
+---
+
+## 4. タグ設計のポイント
+
+- すべてのリソースで「Project」「Environment」「Owner」「ManagedBy」は必須
+- コスト集計やセキュリティ監査に使うタグ（CostCenter, SecurityLevel）は必ず付与
+- Nameタグは命名規則に従い一意性・用途が分かるように
+- タグ値は英小文字・ハイフン区切り推奨

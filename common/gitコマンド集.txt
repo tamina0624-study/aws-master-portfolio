@@ -7,10 +7,15 @@ git status
 git add .
 
 # 3. 修正内容をメモ（コミット）
-git commit -m "運用・監視：単なるダッシュボードではなく『アラートの運用設計』"
+git commit -m "ハイブリッド・クラウド接続とセキュリティ自動化　初期構築"
 
 # 4. GitHubに送信
 git push origin main
+
+#commitを取り消す
+git reset --soft HEAD~1
+
+git reset --soft f2efd37d71ee751e8efb05917a619d64c23873d1
 
 
 ■gitからファイルを消したい場合
@@ -24,3 +29,6 @@ git push --force --tags
 
 #セキュリティ検知を有効にする
 py -m pre_commit install
+
+#確認コマンド
+git config --list

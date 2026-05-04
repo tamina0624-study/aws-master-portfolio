@@ -1,0 +1,42 @@
+【AWS側】
+-アプリケーションサーバー
+ --Name：hcsa-ec2-appserver
+ --OS：Image AWSlinux
+ --instance Type:t2.micro
+ --vpc：prod-hcsa-vpc
+ --subnet：prod-hcsa-private-1
+ --security group：prod-hcsa-vpc-sg
+ --interface：default private us-east-2a
+ --interface：default public us-east-2a
+ --interface：default private us-east-2b
+ --interface：default public us-east-2b
+ --userName:ec2-user
+ --authentication:認証キー
+ --execRole:hcsa-ec2-app-role
+
+
+【疑似オンプレ側】
+-ルーター端末
+ --Name：hcsa-ec2-routerpc
+ --OS：Image ubuntu
+ --instance Type:t2.micro
+ --vpc：onprem-hcsa-vpc
+ --subnet：onprem-hcsa-private-1
+ --security group：onprem-hcsa-vpc-sg
+ --interface：default private
+ --interface：Eastic Public
+ --userName:ubuntu
+ --authentication:認証キー
+ --execRole:hcsa-ec2-router-role
+
+-ユーザー操作端末
+ --Name hcsa-ec2-userpc
+ --OS Image AWSlinux
+ --instance Type:t2.micro
+ --vpc：onprem-hcsa-vpc
+ --subnet：onprem-hcsa-private-1
+ --security group：onprem-hcsa-vpc-sg
+ --interface：default private
+ --userName:ec2-user
+ --authentication:認証キー
+ --execRole:hcsa-ec2-user-role

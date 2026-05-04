@@ -1,0 +1,60 @@
+■CIDR定義
+【AWS側】
+- CIDR：10.0.0.0/16
+    - パブリックサブネット
+     - Name: prod-hcsa-public-1（10.0.1.0/24, us-east-2a）
+     - Name: prod-hcsa-public-2（10.0.2.0/24, us-east-2b）
+    - プライベートサブネット
+     - Name: prod-hcsa-private-1（10.0.11.0/24, us-east-2a）
+     - Name: prod-hcsa-private-2（10.0.12.0/24, us-east-2b）
+
+
+【疑似オンプレ側】
+- CIDR：10.1.0.0/16
+    - サブネット
+     - Name: onprem-hcsa-subnet-1（10.1.1.0/24, us-east-2a）
+     - Name: onprem-hcsa-subnet-2（10.1.2.0/24, us-east-2b）
+
+■IPAddress　定義
+-パブリックサブネット
+hcsa-ec2-appserver:xx.xx.xx.xx
+hcsa-ec2-routerpc:xx.xx.xx.xx
+hcsa-ec2-userpc:xx.xx.xx.xx
+onprem-hcsa-vpc-cgw:xx.xx.xx.xx
+
+-プライベートサブネット
+hcsa-ec2-appserver:xx.xx.xx.xx
+hcsa-ec2-routerpc:xx.xx.xx.xx
+hcsa-ec2-userpc:xx.xx.xx.xx
+prod-hcsa-vpc-rds:xx.xx.xx.xx
+
+-VPN外部アドレス
+tunnel1:xx.xx.xx.xx
+tunnel2:xx.xx.xx.xx
+
+-VPN内部アドレス
+tunnel1:xx.xx.xx.xx
+tunnel2:xx.xx.xx.xx
+
+■IP SET
+allow-ipset
+上記IP定義を全て
+
+deny-ipset
+最初は空
+
+■ルートテーブル
+【prod-hcsa-vpc-rtb】
+onpremセグメント⇒prod-hcsa-vpc-vpgw
+0.0.0.0/0⇒prod-hcsa-vpc-igw
+prodセグメント⇒ローカル
+
+【onprem-hcsa-vpc-rtb】
+prodセグメント⇒onprem-hcsa-vpc-cgw
+0.0.0.0/0⇒onprem-hcsa-vpc-igw
+onpremセグメント⇒ローカル
+
+■VPN設定
+接続方式：L2TP/IPsec
+冗長：2トンネルによる経路冗長
+ルーティング方式:BGP

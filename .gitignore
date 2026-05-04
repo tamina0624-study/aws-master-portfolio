@@ -46,9 +46,12 @@ terraform.rc
 .local/
 .private/
 *Secret*/
-secrets/
 config/local/
 00-Secret/
+Secrets/
+secrets/
+Secret/
+secret/
 
 # env files
 .env

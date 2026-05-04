@@ -1,0 +1,61 @@
+了解しました！
+それでは順番に詳細設計を進めていきます。
+
+【1. AWS側VPCとVPN Gatewayの設計】
+
+■ 必要な設定項目
+- VPCのCIDRブロック（例：10.0.0.0/16）
+- サブネット設計（パブリック/プライベート、AZ分散）
+- インターネットゲートウェイ（必要に応じて）
+- VPN Gateway（VGW）のアタッチ
+- ルートテーブル（VPN経由通信の経路追加）
+
+■ Terraformで管理するリソース例
+- aws_vpc
+- aws_subnet
+- aws_internet_gateway
+- aws_vpn_gateway
+- aws_vpn_gateway_attachment
+- aws_route_table / aws_route
+
+---
+
+【2. Customer Gateway（オンプレ側情報）】
+
+■ 必要な設定項目
+- Customer Gateway（CGW）のIPアドレス（オンプレ側のグローバルIP）
+- BGP ASN（オンプレ側のAS番号）
+
+■ Terraformで管理するリソース例
+- aws_customer_gateway
+
+---
+
+【3. VPN Connection（Site-to-Site VPN）】
+
+■ 必要な設定項目
+- VPN接続タイプ（ipsec.1）
+- BGP有無
+- トンネル冗長化（2本）
+- 事前共有キー（Pre-Shared Key）
+
+■ Terraformで管理するリソース例
+- aws_vpn_connection
+- aws_vpn_connection_route
+
+---
+
+【4. ルートテーブル設定】
+
+■ 必要な設定項目
+- オンプレ側宛のルートをVPN Gateway経由で追加
+- 必要に応じてBGPで動的伝播
+
+---
+
+【5. 疑似オンプレ側（AWS上の別VPCなど）の設計】
+
+■ 必要な設定項目
+- 別VPCのCIDR
+- Customer Gateway用のEC2またはルーター設定
+- BGP/静的ルートの設定

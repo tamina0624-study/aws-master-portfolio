@@ -1,0 +1,18 @@
+
+【オンプレ側VPC（onprem-hcsa-vpc）】
+- EC2（Linux/Windowsサーバー、社内アプリケーション用）
+- EC2（VPNルーター役：Customer Gateway/BGPルータとしても利用可）
+- 必要に応じてファイルサーバーやバッチサーバー
+- セキュリティグループ（社内アクセス制御用）
+- CloudWatch Agent（監視・ログ送信用、任意）
+
+【AWS側VPC（prod-hcsa-vpc）】
+- RDS（MySQL/PostgreSQL等のDB、プライベートサブネット配置）
+- EC2（アプリケーションサーバーやバスティオン、必要に応じて）
+- VPN Gateway（VGW）
+- サブネット（パブリック/プライベート）
+- セキュリティグループ（DB用、アプリ用など）
+- IAMロール（EC2/RDS管理用）
+- CloudWatch（監視・アラート）
+- GuardDuty（脅威検知）
+- WAF（必要に応じてALB等に適用）

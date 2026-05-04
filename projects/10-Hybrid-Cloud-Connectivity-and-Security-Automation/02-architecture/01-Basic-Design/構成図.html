@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+            background-color: #ffffff;
+        }
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            color: #232f3e;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #232f3e;
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18pt;
+        }
+        .container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+        }
+
+        /* Region / VPC Boxes */
+        .box {
+            border-radius: 8px;
+            position: absolute;
+            padding: 10px;
+        }
+        .region {
+            border: 2px solid #5eb9ff;
+            width: 820px;
+            height: 420px;
+            left: 240px;
+            top: 10px;
+        }
+        .vpc {
+            border: 2px solid #3b48cc;
+            width: 680px;
+            height: 350px;
+            left: 60px;
+            top: 60px;
+            background-color: rgba(59, 72, 204, 0.02);
+        }
+        .on-prem {
+            border: 2px dashed #999;
+            width: 180px;
+            height: 350px;
+            left: 20px;
+            top: 60px;
+            background-color: #f9f9f9;
+        }
+
+        .label {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* AZs */
+        .az {
+            border: 1px dotted #5eb9ff;
+            width: 310px;
+            height: 280px;
+            position: absolute;
+            top: 50px;
+        }
+        .az-a { left: 20px; }
+        .az-c { left: 350px; }
+
+        /* Subnets */
+        .subnet {
+            border-radius: 4px;
+            width: 270px;
+            height: 100px;
+            position: absolute;
+            left: 20px;
+            padding: 5px;
+        }
+        .public {
+            top: 35px;
+            border: 1px solid #248823;
+            background-color: #f2f9f2;
+        }
+        .private {
+            top: 150px;
+            border: 1px solid #d13212;
+            background-color: #fff4f4;
+        }
+
+        /* Elements */
+        .node {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 5px;
+            text-align: center;
+            font-size: 8pt;
+            margin: 5px 0;
+        }
+        .node.ec2 { border-left: 5px solid #ff9900; }
+        .node.rds { border-left: 5px solid #3b48cc; }
+        .node.vpn { border-left: 5px solid #ff9900; background: #eee; }
+
+        /* Lines */
+        .vpn-line {
+            position: absolute;
+            top: 220px;
+            left: 200px;
+            width: 60px;
+            border-top: 3px double #ff9900;
+        }
+        .vpn-text {
+            position: absolute;
+            top: 195px;
+            left: 200px;
+            font-size: 7pt;
+            color: #ff9900;
+            width: 60px;
+            text-align: center;
+        }
+
+        /* Security Bar */
+        .security-services {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 8pt;
+        }
+        .badge {
+            background: #232f3e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-left: 5px;
+        }
+
+        .mgmt-bar {
+            position: absolute;
+            bottom: -30px;
+            left: 260px;
+            font-size: 9pt;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>システム全体構成図 (Hybrid Cloud Architecture)</h1>
+    </div>
+
+    <div class="container">
+        <!-- On-Premise -->
+        <div class="box on-prem">
+            <span class="label">オンプレミス</span>
+            <div style="margin-top: 100px;">
+                <div class="node">社内ネットワーク</div>
+                <div class="node vpn">Customer Gateway</div>
+            </div>
+        </div>
+
+        <div class="vpn-text">Site-to-Site VPN<br>(L2TP/IPsec)</div>
+        <div class="vpn-line"></div>
+
+        <!-- AWS Region -->
+        <div class="box region">
+            <span class="label" style="color: #5eb9ff;">AWS Region (Tokyo)</span>
+            <div class="security-services">
+                <span class="badge">WAF</span>
+                <span class="badge">Shield</span>
+                <span class="badge">GuardDuty</span>
+            </div>
+
+            <!-- VPC -->
+            <div class="box vpc">
+                <span class="label" style="color: #3b48cc;">VPC (10.0.0.0/16)</span>
+                <div class="node vpn" style="position: absolute; left: -10px; top: 150px; width: 30px; writing-mode: vertical-rl; padding: 10px 2px;">VGW</div>
+
+                <!-- AZ-A -->
+                <div class="az az-a">
+                    <span class="label" style="font-size: 8pt; color: #999; text-align: center;">AZ - A</span>
+                    <div class="subnet public">
+                        <span class="label" style="font-size: 8pt; color: #248823;">Public Subnet</span>
+                        <div class="node ec2">
+                            <strong>EC2 (Web/App)</strong><br>
+                            <span style="font-size: 7pt;">eth0: Service | <span style="color: #0073bb;">eth1: Mgmt</span></span>
+                        </div>
+                    </div>
+                    <div class="subnet private">
+                        <span class="label" style="font-size: 8pt; color: #d13212;">Private Subnet</span>
+                        <div class="node rds"><strong>RDS (Primary)</strong></div>
+                    </div>
+                </div>
+
+                <!-- AZ-C -->
+                <div class="az az-c">
+                    <span class="label" style="font-size: 8pt; color: #999; text-align: center;">AZ - C</span>
+                    <div class="subnet public">
+                        <span class="label" style="font-size: 8pt; color: #248823;">Public Subnet</span>
+                        <div class="node ec2">
+                            <strong>EC2 (Web/App)</strong><br>
+                            <span style="font-size: 7pt;">eth0: Service | <span style="color: #0073bb;">eth1: Mgmt</span></span>
+                        </div>
+                    </div>
+                    <div class="subnet private">
+                        <span class="label" style="font-size: 8pt; color: #d13212;">Private Subnet</span>
+                        <div class="node rds"><strong>RDS (Standby)</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mgmt-bar">
+            <strong>運用管理・監視:</strong> CloudWatch, CloudTrail, IAM Role, AWS Config
+        </div>
+    </div>
+</body>
+</html>

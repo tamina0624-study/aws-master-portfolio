@@ -1,0 +1,42 @@
+Terraform設計の基本方針を以下の通り整理します。
+
+【1. ディレクトリ・モジュール構成】
+- ルート直下に main.tf, variables.tf, outputs.tf, provider.tf, backend.tf などを配置
+- modules/ 配下に「vpc」「vpn」「guardduty」「waf」「lambda」など主要リソースごとに分割
+- 共通変数やoutputはルートで一元管理し、各モジュールは疎結合を意識
+
+【2. 管理対象リソース】
+- VPC（AWS側、必要に応じてオンプレ模擬VPCも）
+- VPN Gateway、Customer Gateway、VPN Connection
+- GuardDuty（検知ルール含む）
+- WAF（IPセット、ルール）
+- Lambda（自動防御用、必要に応じてS3等も）
+- IAM（Lambda用ロール、EC2用ロール等）
+
+【3. ベストプラクティス】
+- stateファイルは backend（S3/DynamoDB）で管理（本番運用を想定）
+- 変数・outputは明示的に記述し、型・説明も付与
+- resource名やタグは一貫性・命名規則を徹底
+- モジュール間の依存は最小限にし、再利用性を高める
+- バージョン管理（git）とCI/CD連携も推奨
+
+【4. サンプル構成イメージ】
+projects/10-Hybrid-Cloud-Connectivity-and-Security-Automation/
+├ main.tf
+├ variables.tf
+├ outputs.tf
+├ provider.tf
+├ backend.tf
+├ modules/
+│   ├ vpc/
+│   ├ vpn/
+│   ├ guardduty/
+│   ├ waf/
+│   └ lambda/
+└ README.md
+
+---
+【5. その他】
+- セキュリティや可用性要件に応じて、モジュールの粒度や管理単位を調整
+- テスト・検証用と本番用でworkspaceや変数ファイルを分離
+- ドキュメント（README.md）で構成・運用ルールを明記

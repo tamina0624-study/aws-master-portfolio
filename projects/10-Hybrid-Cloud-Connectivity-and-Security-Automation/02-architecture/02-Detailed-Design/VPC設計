@@ -1,0 +1,26 @@
+【AWS側VPC】
+- VPC名：prod-hcsa-vpc
+- CIDR：10.0.0.0/16
+    - パブリックサブネット
+     - Name: prod-hcsa-public-1（10.0.1.0/24, us-east-2a）
+     - Name: prod-hcsa-public-2（10.0.2.0/24, us-east-2b）
+    - プライベートサブネット
+     - Name: prod-hcsa-private-1（10.0.11.0/24, us-east-2a）
+     - Name: prod-hcsa-private-2（10.0.12.0/24, us-east-2b）
+ - ACL名：prod-hcsa-vpc-acl
+ - セキュリティグループ名：prod-hcsa-vpc-sg
+ - ルートテーブル名：prod-hcsa-vpc-rtb
+ - インターネットゲートウェイ名：prod-hcsa-vpc-igw
+ - 仮想プライベートゲートウェイ名：prod-hcsa-vpc-vpgw
+
+【疑似オンプレVPC】
+- VPC名：onprem-hcsa-vpc
+- CIDR：10.1.0.0/16
+    - サブネット
+     - Name: onprem-hcsa-subnet-1（10.1.1.0/24, us-east-2a）
+     - Name: onprem-hcsa-subnet-2（10.1.2.0/24, us-east-2b）
+ - ACL名：onprem-hcsa-vpc-acl
+ - セキュリティグループ名：onprem-hcsa-vpc-sg
+ - ルートテーブル名：onprem-hcsa-vpc-rtb
+ - インターネットゲートウェイ名：onprem-hcsa-vpc-igw
+ - カスタマーゲートウェイ名：onprem-hcsa-vpc-cgw

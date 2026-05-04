@@ -1,0 +1,59 @@
+Optimizing tool selection...タグ設計は運用・管理・コスト集計・セキュリティの観点で非常に重要です。
+おすすめのタグ設計方針を以下にまとめます。
+
+【1. 必須タグ例（全リソース共通で付与推奨）】
+- Name：リソース名（命名規則を統一）
+- Project：Hybrid-Cloud-Connectivity-and-Security-Automation
+- Environment：dev / stg / prod など
+- Owner：担当者名やチーム名
+- ManagedBy：Terraform など
+
+【2. 任意・用途別タグ例】
+- CostCenter：部門やプロジェクトのコスト管理用
+- SecurityLevel：情報資産の重要度
+- Application：アプリ名や用途
+- CreatedDate：作成日（自動付与も可）
+
+■ CostCenter（コストセンター）
+目的：AWSリソースのコストを部門・プロジェクト単位で集計・管理するためのタグ
+使い方例：
+ - 部門ごと：costcenter = "it-dept"、"hr-dept" など
+ - プロジェクトごと：costcenter = "project-x"、"infra-migration" など
+ポイント：
+ - 組織の会計・予算管理と連動させることで、どの部門・プロジェクトがどれだけAWSコストを使っているかを明確化
+ - AWS Cost Explorerや請求レポートでフィルタ・集計が容易になる
+ - 値は組織の管理ルールに合わせて統一（英小文字・ハイフン区切り推奨）
+
+■ SecurityLevel（セキュリティレベル）
+
+目的：リソースごとの情報資産の重要度や機密性を明示し、運用・監査・自動化の基準とする
+使い方例：
+ - securitylevel = "public"（公開情報）
+ - securitylevel = "internal"（社内限定）
+ - securitylevel = "confidential"（機密情報）
+ - securitylevel = "restricted"（厳重管理）
+ポイント：
+ - セキュリティポリシーや監査要件に応じて、アクセス制御や監視強度を変える際の基準にできる
+ - タグ値の定義は組織の情報区分に合わせて統一
+ - 例：confidential以上はS3バケットの暗号化必須、など自動化ルールにも活用可能
+
+
+
+【3. 命名規則例】
+- Nameタグは「プロジェクト-用途-環境-連番」例：hcsa-vpc-dev-01
+- タグ値は英小文字・ハイフン区切り推奨
+
+【4. 実装例（Terraform variables.tf）】
+```hcl
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
+    Project    = "Hybrid-Cloud-Connectivity-and-Security-Automation"
+    Environment = "dev"
+    Owner      = "your-name"
+    ManagedBy  = "Terraform"
+  }
+}
+```
+各resourceで `tags = var.tags` を指定。

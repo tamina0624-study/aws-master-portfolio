@@ -1,0 +1,44 @@
+【hcsa-ec2-appserver-role】
+--必要権限
+SSM Sessionマネージャーでアクセス出来る
+　→ AmazonSSMManagedInstanceCore（arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore）
+SSHでアクセス出来る
+　→ （キーペア管理、IAM権限不要）
+RDSにIAM認証で入れる
+　→ AmazonRDSFullAccess または rds-db:connect
+cloudwatchにログを書き込める
+　→ CloudWatchAgentServerPolicy（arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy）
+RDSのデータを参照できる、編集できる、追加できる
+　→ rds-db:connect, rds:DescribeDBInstances, rds:ExecuteStatement など
+
+
+【hcsa-ec2-routerpc-role】
+--必要権限
+SSM Sessionマネージャーでアクセス出来る
+　→ AmazonSSMManagedInstanceCore
+SSHでアクセス出来る
+　→ （キーペア管理、IAM権限不要）
+cloudwatchにログを書き込める
+　→ CloudWatchAgentServerPolicy
+
+
+【hcsa-ec2-userpc-role】
+--必要権限
+SSM Sessionマネージャーでアクセス出来る
+　→ AmazonSSMManagedInstanceCore
+SSHでアクセス出来る
+　→ （キーペア管理、IAM権限不要）
+cloudwatchにログを書き込める
+　→ CloudWatchAgentServerPolicy
+
+
+【hcsa-lambda-block_attacker_ip_port】
+--必要権限
+cloudwatchにログを書き込める
+　→ AWSLambdaBasicExecutionRole（arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole）
+イベントブリッジからイベントを受け取れる
+　→ events:PutEvents, events:DescribeRule, events:EnableRule など
+セキュリティグループを編集できる
+　→ ec2:AuthorizeSecurityGroupIngress, ec2:RevokeSecurityGroupIngress, ec2:AuthorizeSecurityGroupEgress, ec2:RevokeSecurityGroupEgress
+ネットワークACLを編集できる
+　→ ec2:CreateNetworkAclEntry, ec2:DeleteNetworkAclEntry, ec2:ReplaceNetworkAclEntry

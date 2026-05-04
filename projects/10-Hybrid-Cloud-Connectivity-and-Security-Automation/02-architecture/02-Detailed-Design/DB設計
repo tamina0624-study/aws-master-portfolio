@@ -1,0 +1,24 @@
+【AWS側】
+-機密情報保持DBサーバー
+ --Name：prod-hcsa-vpc-rds
+ --engin：Mysql
+ --instance Type:db.t4.micro
+ --strage：gp2 20gb
+ --vpc：prod-hcsa-vpc
+ --AZ：us-east-2a
+ --subnet：prod-hcsa-private-1
+ --security group：prod-hcsa-vpc-rds-sg
+ --AllowPublicAccess：false
+ --interface：default private us-east-2a
+ --authentication:IAM認証
+ --masteruser:admin pass:
+
+スキーマ設計
+-DB名：hcsa_db
+-テーブル名：users
+ --id:INT PRIMARY KEY AUTO_INCREMENT
+ --name:VARCHAR(255) NOT NULL
+ --email:VARCHAR(255) NOT NULL UNIQUE
+ --password:VARCHAR(255) NOT NULL
+ --created_at:DATETIME DEFAULT CURRENT_TIMESTAMP
+ --updated_at:DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

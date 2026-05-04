@@ -146,3 +146,19 @@ variable "userpc_sg_egress" {
 	}))
 	default = []
 }
+
+variable "aws_bgp_asn" {
+  description = "AWS側VGWのBGP ASN"
+  type        = string
+}
+
+variable "vpn_type" {
+	description = "VPN接続タイプ"
+	type        = string
+	default     = "ipsec.1"
+}
+
+variable "onprem_bgp_asn" {
+  description = "オンプレ側カスタマーゲートウェイのBGP ASN"
+  type        = string
+}

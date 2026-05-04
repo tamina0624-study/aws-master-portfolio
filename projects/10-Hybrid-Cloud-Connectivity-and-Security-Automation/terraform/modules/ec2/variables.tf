@@ -39,3 +39,9 @@ variable "tags" {
   description = "Common tags"
   type        = map(string)
 }
+
+variable "userdata" {
+  description = "EC2インスタンスのuser_data（シェルスクリプト等）"
+  type        = string
+  default     = null
+}

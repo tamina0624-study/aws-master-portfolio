@@ -97,7 +97,7 @@ resource "aws_db_instance" "prod_hcsa_rds" {
 	db_subnet_group_name    = aws_db_subnet_group.prod_hcsa_rds.name
 	vpc_security_group_ids  = [aws_security_group.prod_hcsa_vpc_rds_sg.id]
 	username                = var.rds_master_username
-	password                = var.rds_master_password
+	password                = var.rds_master_password != "" ? var.rds_master_password : trimspace(data.local_file.rds_password.content)
 	db_name                 = "hcsa_db"
 	multi_az                = false
 	availability_zone       = "us-east-2a"
@@ -106,6 +106,11 @@ resource "aws_db_instance" "prod_hcsa_rds" {
 	deletion_protection     = false
 	tags                    = merge(var.tags, { Name = "prod-hcsa-vpc-rds" })
 	iam_database_authentication_enabled = true
+}
+
+# --- RDSパスワードを外部ファイルから取得 ---
+data "local_file" "rds_password" {
+  filename = "${path.module}/modules/Secret/securet"
 }
 # --- AWS側VPC: パブリックサブネット用ルートテーブル ---
 resource "aws_route_table" "aws_public" {
@@ -158,15 +163,16 @@ resource "aws_vpn_gateway_route_propagation" "vgw_route" {
 
 # 仮想プライベートゲートウェイ（VGW）
 resource "aws_vpn_gateway" "prod_hcsa_vgw" {
-	vpc_id = module.aws_vpc.vpc_id
-	tags   = merge(var.tags, { Name = "prod-hcsa-vgw" })
+	vpc_id  = module.aws_vpc.vpc_id
+	amazon_side_asn = var.aws_bgp_asn
+	tags    = merge(var.tags, { Name = "prod-hcsa-vgw" })
 }
 
 # カスタマーゲートウェイ（オンプレ想定）
 resource "aws_customer_gateway" "onprem" {
-	bgp_asn    = 65000
-	ip_address = var.onprem_gateway_ip # 疑似オンプレ側のグローバルIPを指定
-	type       = "ipsec.1"
+	bgp_asn    = var.onprem_bgp_asn
+	ip_address = var.onprem_gateway_ip
+	type       = var.vpn_type
 	tags       = merge(var.tags, { Name = "onprem-cgw" })
 }
 
@@ -174,7 +180,7 @@ resource "aws_customer_gateway" "onprem" {
 resource "aws_vpn_connection" "onprem" {
 	vpn_gateway_id      = aws_vpn_gateway.prod_hcsa_vgw.id
 	customer_gateway_id = aws_customer_gateway.onprem.id
-	type                = "ipsec.1"
+	type                = var.vpn_type
 	static_routes_only  = true
 	tags                = merge(var.tags, { Name = "onprem-vpn-connection" })
 }
@@ -458,7 +464,7 @@ module "appserver" {
 	associate_public_ip_address = false
 	name                    = "hcsa-appserver-prod-01"
 	tags                    = var.tags
-  security_group_ids      = [aws_security_group.prod_hcsa_vpc_sg.id]
+	security_group_ids      = [aws_security_group.prod_hcsa_vpc_sg.id]
 }
 
 # EC2: ルーター端末（疑似オンプレVPC内）
@@ -471,7 +477,25 @@ module "routerpc" {
 	associate_public_ip_address = true
 	name                    = "hcsa-routerpc-dev-01"
 	tags                    = var.tags
-  security_group_ids      = [aws_security_group.onprem_hcsa_vpc_sg.id]
+	security_group_ids      = [aws_security_group.onprem_hcsa_vpc_sg.id]
+	userdata = templatefile(
+		"${path.module}/modules/ec2/vpn_setup.sh.tpl",
+		{
+			tun1_outside_ip         = aws_vpn_connection.onprem.tunnel1_address
+			tun2_outside_ip         = aws_vpn_connection.onprem.tunnel2_address
+			onprem_public_ip        = var.onprem_gateway_ip
+			tun1_psk                = aws_vpn_connection.onprem.tunnel1_preshared_key
+			tun2_psk                = aws_vpn_connection.onprem.tunnel2_preshared_key
+			tun1_inside_cgw_ip      = aws_vpn_connection.onprem.tunnel1_cgw_inside_address
+			tun1_inside_vgw_ip      = aws_vpn_connection.onprem.tunnel1_vgw_inside_address
+			tun2_inside_cgw_ip      = aws_vpn_connection.onprem.tunnel2_cgw_inside_address
+			tun2_inside_vgw_ip      = aws_vpn_connection.onprem.tunnel2_vgw_inside_address
+			tun1_inside_cidr_block  = aws_vpn_connection.onprem.tunnel1_inside_cidr
+			tun2_inside_cidr_block  = aws_vpn_connection.onprem.tunnel2_inside_cidr
+			aws_bgp_asn            = var.aws_bgp_asn
+			onprem_bgp_asn         = var.onprem_bgp_asn
+		}
+	)
 }
 
 # EC2: ユーザー操作端末（疑似オンプレVPC内）
@@ -484,7 +508,7 @@ module "userpc" {
 	associate_public_ip_address = false
 	name                    = "hcsa-userpc-dev-01"
 	tags                    = var.tags
-  security_group_ids      = [aws_security_group.onprem_hcsa_vpc_sg.id]
+	security_group_ids      = [aws_security_group.onprem_hcsa_vpc_sg.id]
 }
 resource "aws_security_group" "prod_hcsa_vpc_sg" {
 	name        = "prod-hcsa-vpc-sg"

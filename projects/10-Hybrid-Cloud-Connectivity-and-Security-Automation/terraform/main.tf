@@ -22,7 +22,7 @@ resource "aws_wafv2_ip_set" "deny_ipset" {
 	name               = "deny-ipset"
 	scope              = "REGIONAL"
 	ip_address_version = "IPV4"
-	addresses          = []
+	addresses          = ["255.255.255.255/32"]
 	tags = merge(var.tags, { Name = "deny-ipset" })
 }
 # --- GuardDuty Detector ---
@@ -39,7 +39,7 @@ resource "aws_lambda_function" "block_attacker_ip_port" {
 	timeout       = 3
 	memory_size   = 128
 	filename      = var.lambda_block_attacker_zip
-	source_code_hash = filebase64sha256(var.lambda_block_attacker_zip)
+	source_code_hash = filebase64sha256("lambda_function.zip")
 	tags          = var.tags
 }
 
@@ -123,6 +123,13 @@ resource "aws_route_table_association" "aws_public" {
 	subnet_id      = module.aws_vpc.public_subnet_ids[count.index]
 	route_table_id = aws_route_table.aws_public.id
 }
+
+# オンプレ側ルーター用の固定パブリックIP (Elastic IP)
+resource "aws_eip" "onprem_router_eip" {
+  domain = "vpc"
+  tags = { Name = "onprem-hcsa-Router-EIP" }
+}
+
 
 # --- AWS側VPC: プライベートサブネット用ルートテーブル ---
 resource "aws_route_table" "aws_private" {
@@ -427,9 +434,6 @@ terraform {
 	}
 }
 
-provider "aws" {
-	region = var.region
-}
 
 
 # AWS側VPC
@@ -465,6 +469,15 @@ module "appserver" {
 	name                    = "hcsa-appserver-prod-01"
 	tags                    = var.tags
 	security_group_ids      = [aws_security_group.prod_hcsa_vpc_sg.id]
+	userdata = templatefile(
+		"${path.module}/modules/ec2/appserver_userdata.sh.tpl",
+		{
+			rds_endpoint = aws_db_instance.prod_hcsa_rds.endpoint
+			rds_user     = var.rds_master_username
+			rds_pass     = var.rds_master_password != "" ? var.rds_master_password : trimspace(data.local_file.rds_password.content)
+			rds_db       = "hcsa_db"
+		}
+	)
 }
 
 # EC2: ルーター端末（疑似オンプレVPC内）
@@ -483,7 +496,7 @@ module "routerpc" {
 		{
 			tun1_outside_ip         = aws_vpn_connection.onprem.tunnel1_address
 			tun2_outside_ip         = aws_vpn_connection.onprem.tunnel2_address
-			onprem_public_ip        = var.onprem_gateway_ip
+			onprem_public_ip        = aws_eip.onprem_router_eip.public_ip
 			tun1_psk                = aws_vpn_connection.onprem.tunnel1_preshared_key
 			tun2_psk                = aws_vpn_connection.onprem.tunnel2_preshared_key
 			tun1_inside_cgw_ip      = aws_vpn_connection.onprem.tunnel1_cgw_inside_address
@@ -497,6 +510,13 @@ module "routerpc" {
 		}
 	)
 }
+
+# エラスティックIPの紐づけ処理
+resource "aws_eip_association" "onprem_router_eip_assoc" {
+	instance_id   = module.routerpc.id
+	allocation_id = aws_eip.onprem_router_eip.id
+}
+
 
 # EC2: ユーザー操作端末（疑似オンプレVPC内）
 module "userpc" {

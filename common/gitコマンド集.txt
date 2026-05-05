@@ -7,7 +7,7 @@ git status
 git add .
 
 # 3. 修正内容をメモ（コミット）
-git commit -m "ハイブリッド・クラウド接続とセキュリティ自動化　初期構築"
+git commit -m "ハイブリッド・クラウド接続とセキュリティ自動化　初期構築その2"
 
 # 4. GitHubに送信
 git push origin main

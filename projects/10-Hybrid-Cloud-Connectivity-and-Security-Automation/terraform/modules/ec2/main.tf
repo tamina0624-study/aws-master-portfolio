@@ -7,4 +7,5 @@ resource "aws_instance" "this" {
   associate_public_ip_address = var.associate_public_ip_address
   tags = merge(var.tags, { Name = var.name })
   user_data = var.userdata != null ? var.userdata : null
+  source_dest_check = false
 }

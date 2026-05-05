@@ -150,6 +150,7 @@ variable "userpc_sg_egress" {
 variable "aws_bgp_asn" {
   description = "AWS側VGWのBGP ASN"
   type        = string
+  default     = "65000"
 }
 
 variable "vpn_type" {
@@ -161,4 +162,5 @@ variable "vpn_type" {
 variable "onprem_bgp_asn" {
   description = "オンプレ側カスタマーゲートウェイのBGP ASN"
   type        = string
+  default     = "65001"
 }

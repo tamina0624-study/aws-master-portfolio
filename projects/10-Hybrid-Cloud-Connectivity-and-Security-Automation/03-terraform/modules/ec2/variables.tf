@@ -45,3 +45,9 @@ variable "userdata" {
   type        = string
   default     = null
 }
+
+variable "iam_instance_profile" {
+  description = "IAM instance profile name to attach to the instance"
+  type        = string
+  default     = null
+}

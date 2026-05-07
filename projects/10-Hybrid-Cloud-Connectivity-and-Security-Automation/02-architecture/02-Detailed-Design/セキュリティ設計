@@ -53,21 +53,21 @@ execRole: hcsa-lambda-role
 ■ACL
 【prod-hcsa-vpc-acl】
 inbound-rule
-deny deny-ipset all
-permit allow-ipset all
+100 permit 0.0.0.0/0 all
+200 deny 0.0.0.0/0 all
 
 outbound-rule
-deny deny-ipset all
-permit allow-ipset all
+100 permit 0.0.0.0/0 all
+200 deny 0.0.0.0/0 all
 
 【onprem-hcsa-vpc-acl】
 inbound-rule
-deny deny-ipset all
-permit allow-ipset all
+100 permit 0.0.0.0/0 all
+200 deny 0.0.0.0/0 all
 
 outbound-rule
-deny deny-ipset all
-permit allow-ipset all
+100 permit 0.0.0.0/0 all
+200 deny 0.0.0.0/0 all
 
 ■security group
 【prod-hcsa-vpc-sg】

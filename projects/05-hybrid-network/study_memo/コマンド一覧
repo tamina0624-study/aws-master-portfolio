@@ -471,6 +471,7 @@ ping -c 4 169.254.49.225
 ping -c 4 169.254.233.32
 
 ssh -i "my-portfolio-key" ubuntu@3.15.49.151
+ssh -i "my-portfolio-key" ec2-user@3.133.130.160
 
 
 sudo ipsec restart
@@ -481,7 +482,10 @@ sudo vim /etc/ipsec.secrets
 
 sudo tcpdump -i any -n icmp
 
-sudo tcpdump -i vti1 -n icmp
+sudo tcpdump -i any -n icmp
+sudo tcpdump -i any -n tcp port 5000
+
+
 sudo tcpdump -i any -n udp port 500
 sudo tcpdump -i any -n udp port 500 or udp port 4500
 

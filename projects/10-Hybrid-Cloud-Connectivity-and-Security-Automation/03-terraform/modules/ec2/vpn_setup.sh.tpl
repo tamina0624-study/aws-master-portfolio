@@ -16,7 +16,7 @@ connections {
     aws-tunnel-1 {
         local_addrs  = $LOCAL_PRIVATE_IP
         remote_addrs = ${tun1_outside_ip}
-        version = 2
+        version = 1
         proposals = aes128-sha1-modp1024,aes256-sha256-modp2048,default
         keyingtries = 0
         local {
@@ -47,7 +47,7 @@ connections {
     aws-tunnel-2 {
         local_addrs  = $LOCAL_PRIVATE_IP
         remote_addrs = ${tun2_outside_ip}
-        version = 2
+        version = 1
         proposals = aes128-sha1-modp1024,aes256-sha256-modp2048,default
         keyingtries = 0
         local {
@@ -101,9 +101,6 @@ ip link set vti-t2 up
 
 ip route add ${tun1_inside_cidr_block} dev vti-t1 table 220
 ip route add ${tun2_inside_cidr_block} dev vti-t2 table 220
-
-ip route add 10.0.1.0/24 dev vti-t1 table 220 metric 10
-ip route add 10.0.1.0/24 dev vti-t2 table 220 metric 20
 
 sysctl -w net.ipv4.conf.all.rp_filter=0
 

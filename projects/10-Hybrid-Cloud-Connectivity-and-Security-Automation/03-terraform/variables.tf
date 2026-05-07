@@ -15,11 +15,13 @@ variable "rds_master_password" {
 	description = "RDSのマスターパスワード"
 	type        = string
 	sensitive   = true
+	default     = "changeme1234" # 仮のデフォルト値。必要に応じて変更してください
 }
 # 疑似オンプレ側グローバルIP（VPN用）
 variable "onprem_gateway_ip" {
 	description = "疑似オンプレ側のグローバルIPアドレス（VPNカスタマーゲートウェイ用）"
 	type        = string
+	default     = "0.0.0.0" # 仮のデフォルト値。必要に応じて変更してください
 }
 
 variable "onprem_vpc_cidr" {

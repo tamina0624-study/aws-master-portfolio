@@ -1,3 +1,39 @@
+# Ubuntu 24.04 (最新) AMIデータソース
+data "aws_ami" "ubuntu" {
+	most_recent = true
+	owners      = ["099720109477"] # Canonical (Ubuntu の提供元)
+
+	filter {
+		name   = "name"
+		values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+	}
+
+	filter {
+		name   = "virtualization-type"
+		values = ["hvm"]
+	}
+}
+
+data "aws_ami" "amazon_linux_2023" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023*-x86_64"]
+  }
+}
+
+# --- インターネットゲートウェイ ---
+resource "aws_internet_gateway" "prod_hcsa_vpc_igw" {
+	vpc_id = module.aws_vpc.vpc_id
+	tags   = merge(var.tags, { Name = "prod-hcsa-vpc-igw" })
+}
+
+resource "aws_internet_gateway" "onprem_hcsa_vpc_igw" {
+	vpc_id = module.onprem_vpc.vpc_id
+	tags   = merge(var.tags, { Name = "onprem-hcsa-vpc-igw" })
+}
 # --- WAFv2 IP Set: allow-ipset ---
 resource "aws_wafv2_ip_set" "allow_ipset" {
 	name               = "allow-ipset"
@@ -25,10 +61,6 @@ resource "aws_wafv2_ip_set" "deny_ipset" {
 	addresses          = ["255.255.255.255/32"]
 	tags = merge(var.tags, { Name = "deny-ipset" })
 }
-# --- GuardDuty Detector ---
-resource "aws_guardduty_detector" "main" {
-	enable = true
-}
 
 # --- Lambda（攻撃元IPブロック） ---
 resource "aws_lambda_function" "block_attacker_ip_port" {
@@ -38,7 +70,7 @@ resource "aws_lambda_function" "block_attacker_ip_port" {
 	runtime       = "python3.8"
 	timeout       = 3
 	memory_size   = 128
-	filename      = var.lambda_block_attacker_zip
+	filename      = "lambda_function.zip"
 	source_code_hash = filebase64sha256("lambda_function.zip")
 	tags          = var.tags
 }
@@ -83,7 +115,7 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 # --- RDS用サブネットグループ ---
 resource "aws_db_subnet_group" "prod_hcsa_rds" {
 	name       = "prod-hcsa-rds-subnet-group"
-	subnet_ids = [module.aws_vpc.private_subnet_ids[0]]
+	subnet_ids = [module.aws_vpc.private_subnet_ids[0], module.aws_vpc.private_subnet_ids[1]]
 	tags       = merge(var.tags, { Name = "prod-hcsa-rds-subnet-group" })
 }
 
@@ -114,9 +146,24 @@ data "local_file" "rds_password" {
 }
 # --- AWS側VPC: パブリックサブネット用ルートテーブル ---
 resource "aws_route_table" "aws_public" {
-	vpc_id = module.aws_vpc.vpc_id
-	tags   = merge(var.tags, { Name = "prod-hcsa-public-rtb" })
+		vpc_id = module.aws_vpc.vpc_id
+		tags   = merge(var.tags, { Name = "prod-hcsa-public-rtb" })
 }
+
+# --- AWS側VPC: 0.0.0.0/0 → IGWルート ---
+resource "aws_route" "aws_public_igw" {
+	route_table_id         = aws_route_table.aws_public.id
+	destination_cidr_block = "0.0.0.0/0"
+	gateway_id             = aws_internet_gateway.prod_hcsa_vpc_igw.id
+}
+
+# --- オンプレVPC: 0.0.0.0/0 → IGWルート ---
+resource "aws_route" "onprem_public_igw" {
+	route_table_id         = aws_route_table.onprem.id
+	destination_cidr_block = "0.0.0.0/0"
+	gateway_id             = aws_internet_gateway.onprem_hcsa_vpc_igw.id
+}
+
 
 resource "aws_route_table_association" "aws_public" {
 	count          = length(module.aws_vpc.public_subnet_ids)
@@ -145,9 +192,10 @@ resource "aws_route_table_association" "aws_private" {
 
 # --- オンプレVPC用ルートテーブル ---
 resource "aws_route_table" "onprem" {
-	vpc_id = module.onprem_vpc.vpc_id
-	tags   = merge(var.tags, { Name = "onprem-hcsa-rtb" })
+		vpc_id = module.onprem_vpc.vpc_id
+		tags   = merge(var.tags, { Name = "onprem-hcsa-rtb" })
 }
+
 
 resource "aws_route_table_association" "onprem_public" {
 	count          = length(module.onprem_vpc.public_subnet_ids)
@@ -175,28 +223,15 @@ resource "aws_vpn_gateway" "prod_hcsa_vgw" {
 	tags    = merge(var.tags, { Name = "prod-hcsa-vgw" })
 }
 
-# カスタマーゲートウェイ（オンプレ想定）
-resource "aws_customer_gateway" "onprem" {
-	bgp_asn    = var.onprem_bgp_asn
-	ip_address = var.onprem_gateway_ip
-	type       = var.vpn_type
-	tags       = merge(var.tags, { Name = "onprem-cgw" })
-}
-
 # VPN接続
 resource "aws_vpn_connection" "onprem" {
 	vpn_gateway_id      = aws_vpn_gateway.prod_hcsa_vgw.id
 	customer_gateway_id = aws_customer_gateway.onprem.id
 	type                = var.vpn_type
-	static_routes_only  = true
+	static_routes_only  = false
 	tags                = merge(var.tags, { Name = "onprem-vpn-connection" })
 }
 
-# VPNルート（AWS側VPCルートテーブルに追加する場合の例）
-resource "aws_vpn_connection_route" "onprem" {
-	vpn_connection_id = aws_vpn_connection.onprem.id
-	destination_cidr_block = var.onprem_vpc_cidr
-}
 resource "aws_iam_role" "lambda_block_attacker" {
 	name = "hcsa-lambda-block_attacker_ip_port"
 	assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
@@ -302,25 +337,38 @@ data "aws_iam_policy_document" "ec2_assume_role_policy" {
 	}
 }
 resource "aws_network_acl" "prod_hcsa_vpc_acl" {
+			ingress {
+				rule_no    = 10
+				protocol   = "icmp"
+				action     = "allow"
+				cidr_block = "0.0.0.0/0"
+				from_port  = 0
+				to_port    = 0
+				icmp_type = -1
+				icmp_code = -1
+			}
+			ingress {
+				rule_no    = 20
+				protocol   = 6
+				action     = "allow"
+				cidr_block = "164.70.177.0/24"
+				from_port  = 22
+				to_port    = 22
+			}
+			ingress {
+				rule_no    = 30
+				protocol   = 6
+				action     = "allow"
+				cidr_block = "0.0.0.0/0"
+				from_port  = 1024
+				to_port    = 65535
+			}
 	vpc_id = module.aws_vpc.vpc_id
-	subnet_ids = concat(module.aws_vpc.public_subnet_ids, module.aws_vpc.private_subnet_ids)
-
 		# deny: deny-ipset, allow: allow-ipset
 		dynamic "ingress" {
-			for_each = aws_wafv2_ip_set.deny_ipset.addresses
-			content {
-				rule_no    = 100
-				protocol   = "-1"
-				action     = "deny"
-				cidr_block = ingress.value
-				from_port  = 0
-				to_port    = 0
-			}
-		}
-		dynamic "ingress" {
 			for_each = aws_wafv2_ip_set.allow_ipset.addresses
 			content {
-				rule_no    = 200
+				rule_no    = 100 + index(tolist(aws_wafv2_ip_set.allow_ipset.addresses), ingress.value)
 				protocol   = "-1"
 				action     = "allow"
 				cidr_block = ingress.value
@@ -328,50 +376,81 @@ resource "aws_network_acl" "prod_hcsa_vpc_acl" {
 				to_port    = 0
 			}
 		}
-		dynamic "egress" {
-			for_each = aws_wafv2_ip_set.deny_ipset.addresses
-			content {
-				rule_no    = 100
-				protocol   = "-1"
-				action     = "deny"
-				cidr_block = egress.value
-				from_port  = 0
-				to_port    = 0
-			}
+	dynamic "ingress" {
+		for_each = aws_wafv2_ip_set.deny_ipset.addresses
+		content {
+			rule_no    = 200 + index(tolist(aws_wafv2_ip_set.deny_ipset.addresses), ingress.value)
+			protocol   = "-1"
+			action     = "deny"
+			cidr_block = ingress.value
+			from_port  = 0
+			to_port    = 0
 		}
-		dynamic "egress" {
-			for_each = aws_wafv2_ip_set.allow_ipset.addresses
-			content {
-				rule_no    = 200
-				protocol   = "-1"
+	}
+					ingress {
+				rule_no    = 199
+				protocol   = 17
 				action     = "allow"
-				cidr_block = egress.value
+				cidr_block = "3.150.10.134/32"
 				from_port  = 0
 				to_port    = 0
 			}
+
+
+			egress {
+			rule_no    = 100
+			protocol   = "-1"
+			action     = "allow"
+			cidr_block = "0.0.0.0/0"
+			from_port  = 0
+			to_port    = 0
 		}
+		egress {
+			rule_no    = 200
+			protocol   = "-1"
+			action     = "deny"
+			cidr_block = "0.0.0.0/0"
+			from_port  = 0
+			to_port    = 0
+		}
+
 	tags = merge(var.tags, { Name = "prod-hcsa-vpc-acl" })
 }
 
 resource "aws_network_acl" "onprem_hcsa_vpc_acl" {
+			ingress {
+				rule_no    = 10
+				protocol   = "icmp"
+				action     = "allow"
+				cidr_block = "0.0.0.0/0"
+				from_port  = 0
+				to_port    = 0
+				icmp_type = -1
+				icmp_code = -1
+			}
+			ingress {
+				rule_no    = 20
+				protocol   = 6
+				action     = "allow"
+				cidr_block = "164.70.177.0/24"
+				from_port  = 22
+				to_port    = 22
+			}
+			ingress {
+				rule_no    = 30
+				protocol   = 6
+				action     = "allow"
+				cidr_block = "0.0.0.0/0"
+				from_port  = 1024
+				to_port    = 65535
+			}
 	vpc_id = module.onprem_vpc.vpc_id
 	subnet_ids = concat(module.onprem_vpc.public_subnet_ids, module.onprem_vpc.private_subnet_ids)
 
 		dynamic "ingress" {
-			for_each = aws_wafv2_ip_set.deny_ipset.addresses
-			content {
-				rule_no    = 100
-				protocol   = "-1"
-				action     = "deny"
-				cidr_block = ingress.value
-				from_port  = 0
-				to_port    = 0
-			}
-		}
-		dynamic "ingress" {
 			for_each = aws_wafv2_ip_set.allow_ipset.addresses
 			content {
-				rule_no    = 200
+				rule_no    = 100 + index(tolist(aws_wafv2_ip_set.allow_ipset.addresses), ingress.value)
 				protocol   = "-1"
 				action     = "allow"
 				cidr_block = ingress.value
@@ -379,33 +458,57 @@ resource "aws_network_acl" "onprem_hcsa_vpc_acl" {
 				to_port    = 0
 			}
 		}
-		dynamic "egress" {
-			for_each = aws_wafv2_ip_set.deny_ipset.addresses
-			content {
-				rule_no    = 100
-				protocol   = "-1"
-				action     = "deny"
-				cidr_block = egress.value
-				from_port  = 0
-				to_port    = 0
-			}
+	dynamic "ingress" {
+		for_each = aws_wafv2_ip_set.deny_ipset.addresses
+		content {
+			rule_no    = 200 + index(tolist(aws_wafv2_ip_set.deny_ipset.addresses), ingress.value)
+			protocol   = "-1"
+			action     = "deny"
+			cidr_block = ingress.value
+			from_port  = 0
+			to_port    = 0
 		}
-		dynamic "egress" {
-			for_each = aws_wafv2_ip_set.allow_ipset.addresses
-			content {
-				rule_no    = 200
-				protocol   = "-1"
+	}
+					ingress {
+				rule_no    = 198
+				protocol   = 17
 				action     = "allow"
-				cidr_block = egress.value
+				cidr_block = "16.58.221.50/32"
 				from_port  = 0
 				to_port    = 0
 			}
+
+
+				ingress {
+				rule_no    = 199
+				protocol   = 17
+				action     = "allow"
+				cidr_block = "18.188.137.116/32"
+				from_port  = 0
+				to_port    = 0
+			}
+
+		egress {
+			rule_no    = 100
+			protocol   = "-1"
+			action     = "allow"
+			cidr_block = "0.0.0.0/0"
+			from_port  = 0
+			to_port    = 0
+		}
+		egress {
+			rule_no    = 200
+			protocol   = "-1"
+			action     = "deny"
+			cidr_block = "0.0.0.0/0"
+			from_port  = 0
+			to_port    = 0
 		}
 	tags = merge(var.tags, { Name = "onprem-hcsa-vpc-acl" })
 }
 resource "aws_security_group" "prod_hcsa_vpc_rds_sg" {
 	name        = "prod-hcsa-vpc-rds-sg"
-	description = "RDS用SG: prod-hcsa-vpc-sgから3306のみ許可"
+	description = "RDS-SG:prod-hcsa-vpc-sg:3306"
 	vpc_id      = module.aws_vpc.vpc_id
 
 	ingress {
@@ -458,17 +561,34 @@ module "onprem_vpc" {
 	tags            = var.tags
 }
 
+
+
+# --- EC2用インスタンスプロファイル ---
+resource "aws_iam_instance_profile" "appserver" {
+	name = "hcsa-ec2-appserver-profile"
+	role = aws_iam_role.appserver.name
+}
+resource "aws_iam_instance_profile" "routerpc" {
+	name = "hcsa-ec2-routerpc-profile"
+	role = aws_iam_role.routerpc.name
+}
+resource "aws_iam_instance_profile" "userpc" {
+	name = "hcsa-ec2-userpc-profile"
+	role = aws_iam_role.userpc.name
+}
+
 # EC2: アプリケーションサーバ（AWS VPC内）
 module "appserver" {
 	source                  = "./modules/ec2"
-	ami                     = "ami-0c55b159cbfafe1f0" # AWS Linux2 us-east-2例
+	ami                     = data.aws_ami.amazon_linux_2023.id # AWS Linux2 us-east-2例
 	instance_type           = "t2.micro"
-	subnet_id               = module.aws_vpc.private_subnet_ids[0]
-	key_name                = null
-	associate_public_ip_address = false
+	subnet_id               = module.aws_vpc.public_subnet_ids[0]
+	key_name                = "id_rsa_aws"
+	associate_public_ip_address = true
 	name                    = "hcsa-appserver-prod-01"
 	tags                    = var.tags
 	security_group_ids      = [aws_security_group.prod_hcsa_vpc_sg.id]
+	iam_instance_profile    = aws_iam_instance_profile.appserver.name
 	userdata = templatefile(
 		"${path.module}/modules/ec2/appserver_userdata.sh.tpl",
 		{
@@ -483,14 +603,15 @@ module "appserver" {
 # EC2: ルーター端末（疑似オンプレVPC内）
 module "routerpc" {
 	source                  = "./modules/ec2"
-	ami                     = "ami-0d5d9d301c853a04a" # Ubuntu us-east-2例
+	ami                     = data.aws_ami.ubuntu.id
 	instance_type           = "t2.micro"
 	subnet_id               = module.onprem_vpc.public_subnet_ids[0]
-	key_name                = null
+	key_name                = "id_rsa_aws"
 	associate_public_ip_address = true
 	name                    = "hcsa-routerpc-dev-01"
 	tags                    = var.tags
 	security_group_ids      = [aws_security_group.onprem_hcsa_vpc_sg.id]
+	iam_instance_profile    = aws_iam_instance_profile.routerpc.name
 	userdata = templatefile(
 		"${path.module}/modules/ec2/vpn_setup.sh.tpl",
 		{
@@ -511,9 +632,19 @@ module "routerpc" {
 	)
 }
 
+# カスタマーゲートウェイ（オンプレ想定）
+resource "aws_customer_gateway" "onprem" {
+	bgp_asn    = var.onprem_bgp_asn
+	ip_address = aws_eip.onprem_router_eip.public_ip
+	type       = var.vpn_type
+	tags       = merge(var.tags, { Name = "onprem-cgw" })
+}
+
+
+
 # エラスティックIPの紐づけ処理
 resource "aws_eip_association" "onprem_router_eip_assoc" {
-	instance_id   = module.routerpc.id
+	instance_id   = module.routerpc.instance_id
 	allocation_id = aws_eip.onprem_router_eip.id
 }
 
@@ -521,25 +652,52 @@ resource "aws_eip_association" "onprem_router_eip_assoc" {
 # EC2: ユーザー操作端末（疑似オンプレVPC内）
 module "userpc" {
 	source                  = "./modules/ec2"
-	ami                     = "ami-0c55b159cbfafe1f0" # AWS Linux2 us-east-2例
+	ami                     = data.aws_ami.amazon_linux_2023.id # AWS Linux2 us-east-2
 	instance_type           = "t2.micro"
-	subnet_id               = module.onprem_vpc.public_subnet_ids[1]
-	key_name                = null
-	associate_public_ip_address = false
+	subnet_id               = module.onprem_vpc.public_subnet_ids[0]
+	key_name                = "id_rsa_aws"
+	associate_public_ip_address = true
 	name                    = "hcsa-userpc-dev-01"
 	tags                    = var.tags
 	security_group_ids      = [aws_security_group.onprem_hcsa_vpc_sg.id]
+	iam_instance_profile    = aws_iam_instance_profile.userpc.name
 }
 resource "aws_security_group" "prod_hcsa_vpc_sg" {
+				ingress {
+					from_port   = 22
+					to_port     = 22
+					protocol    = "tcp"
+					cidr_blocks = ["164.70.177.0/24"]
+				}
+		ingress {
+			from_port   = -1
+			to_port     = -1
+			protocol    = "icmp"
+			cidr_blocks = ["0.0.0.0/0"]
+		}
 	name        = "prod-hcsa-vpc-sg"
-	description = "Allow all inbound/outbound (設計通り)"
+	description = "Allow all inbound/outbound"
 	vpc_id      = module.aws_vpc.vpc_id
 
 	ingress {
 		from_port   = 0
 		to_port     = 0
 		protocol    = "-1"
-		cidr_blocks = ["0.0.0.0/0"]
+		cidr_blocks = aws_wafv2_ip_set.allow_ipset.addresses
+	}
+
+	ingress {
+		from_port   = 500
+		to_port     = 500
+		protocol    = "udp"
+		cidr_blocks = ["3.150.10.134/32"]
+	}
+
+	ingress {
+		from_port   = 4500
+		to_port     = 4500
+		protocol    = "udp"
+		cidr_blocks = ["3.150.10.134/32"]
 	}
 
 	egress {
@@ -553,15 +711,65 @@ resource "aws_security_group" "prod_hcsa_vpc_sg" {
 }
 
 resource "aws_security_group" "onprem_hcsa_vpc_sg" {
+				ingress {
+					from_port   = 22
+					to_port     = 22
+					protocol    = "tcp"
+					cidr_blocks = ["164.70.177.0/24"]
+				}
+				ingress {
+					from_port   = 22
+					to_port     = 22
+					protocol    = "tcp"
+					cidr_blocks = ["164.70.177.0/24"]
+				}
+		ingress {
+			from_port   = -1
+			to_port     = -1
+			protocol    = "icmp"
+			cidr_blocks = ["0.0.0.0/0"]
+		}
+		ingress {
+			from_port   = -1
+			to_port     = -1
+			protocol    = "icmp"
+			cidr_blocks = ["0.0.0.0/0"]
+		}
+		ingress {
+			protocol   = "icmp"
+			cidr_blocks = ["0.0.0.0/0"]
+			from_port  = -1
+			to_port    = -1
+		}
+		ingress {
+			protocol   = "icmp"
+			cidr_blocks = ["0.0.0.0/0"]
+			from_port  = -1
+			to_port    = -1
+		}
 	name        = "onprem-hcsa-vpc-sg"
-	description = "Allow all inbound/outbound (設計通り)"
+	description = "Allow all inbound/outbound"
 	vpc_id      = module.onprem_vpc.vpc_id
 
 	ingress {
 		from_port   = 0
 		to_port     = 0
 		protocol    = "-1"
-		cidr_blocks = ["0.0.0.0/0"]
+		cidr_blocks = aws_wafv2_ip_set.allow_ipset.addresses
+	}
+
+	ingress {
+		from_port   = 500
+		to_port     = 500
+		protocol    = "udp"
+		cidr_blocks = ["16.58.221.50/32","18.188.137.116/32"]
+	}
+
+	ingress {
+		from_port   = 4500
+		to_port     = 4500
+		protocol    = "udp"
+		cidr_blocks = ["16.58.221.50/32","18.188.137.116/32"]
 	}
 
 	egress {

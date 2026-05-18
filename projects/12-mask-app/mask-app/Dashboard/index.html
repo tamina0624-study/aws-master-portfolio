@@ -137,7 +137,26 @@
             <div class="editor-title">
               入力ログ / Input Logs
             </div>
-
+            <div class="mask-type-buttons" style="margin-top: 0.5em; display: flex; gap: 0.5em; flex-wrap: wrap;">
+              <button type="button" class="mask-type-btn" id="btn-jwt" style="padding: 0.3em 1em; border-radius: 4px; border: none; background: #e53935; color: #fff; font-weight: 600; box-shadow: 0 2px 8px #e5393533; cursor: pointer; transition: filter 0.2s;">JWTToken</button>
+              <button type="button" class="mask-type-btn" id="btn-awskey" style="padding: 0.3em 1em; border-radius: 4px; border: none; background: #1e88e5; color: #fff; font-weight: 600; box-shadow: 0 2px 8px #1e88e533; cursor: pointer; transition: filter 0.2s;">AWSKey</button>
+              <button type="button" class="mask-type-btn" id="btn-custom" style="padding: 0.3em 1em; border-radius: 4px; border: none; background: #43a047; color: #fff; font-weight: 600; box-shadow: 0 2px 8px #43a04733; cursor: pointer; transition: filter 0.2s;">Custom</button>
+              <button type="button" class="mask-type-btn" id="btn-email" style="padding: 0.3em 1em; border-radius: 4px; border: none; background: #fbc02d; color: #fff; font-weight: 600; box-shadow: 0 2px 8px #fbc02d33; cursor: pointer; transition: filter 0.2s;">Email</button>
+              <button type="button" class="mask-type-btn" id="btn-ipv4" style="padding: 0.3em 1em; border-radius: 4px; border: none; background: #8e24aa; color: #fff; font-weight: 600; box-shadow: 0 2px 8px #8e24aa33; cursor: pointer; transition: filter 0.2s;">IPv4</button>
+              <button type="button" class="mask-type-btn" id="btn-entropy" style="padding: 0.3em 1em; border-radius: 4px; border: none; background: #00bcd4; color: #fff; font-weight: 600; box-shadow: 0 2px 8px #00bcd433; cursor: pointer; transition: filter 0.2s;">Entropy</button>
+              <style>
+                .mask-type-btn:hover {
+                  filter: brightness(1.15) saturate(1.2);
+                  box-shadow: 0 4px 16px #0002;
+                }
+                .mask-type-btn.active {
+                  background: #222 !important;
+                  color: #fff !important;
+                  border: 1.5px solid #111;
+                  box-shadow: 0 2px 8px #2228;
+                }
+              </style>
+            </div>
           </div>
 
           <textarea id="inputText" placeholder="ログ・設定・スタックトレース・APIレスポンス等を貼り付け..."></textarea>
@@ -156,6 +175,17 @@
 
             </div>
 
+              <!-- エントロピー最小値設定コントロール -->
+              <div class="entropy-control" style="margin-top: 1em; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5em;">
+                <div style="margin-bottom: 0.2em;">
+                  <label for="entropyMin" style="font-weight: bold;">エントロピー最小値 / Min Entropy</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1em;">
+                  <input type="range" id="entropyMin" min="1" max="6" step="0.1" value="3.5" style="width: 180px;">
+                  <input type="number" id="entropyMinNumber" min="1" max="6" step="0.1" value="3.5" style="width: 60px;">
+                </div>
+              </div>
+
           </div>
 
         </section>
@@ -170,7 +200,22 @@
 
           </div>
 
-          <textarea id="outputText" placeholder="マスク済みテキストがここに表示されます..." readonly></textarea>
+          <!-- 色付き表示用div -->
+          <div id="outputText" class="output-text" style="min-height:120px; background:transparent; color:#fff; padding:0.5em; border-radius:4px; font-family:monospace; white-space:pre-wrap; word-break:break-all; outline:none;" tabindex="0"></div>
+  <style>
+    .masked-highlight {
+      background: #ffe082;
+      color: #d84315;
+      font-weight: bold;
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+    .output-text {
+      border: 1px solid #888;
+      font-size: 1em;
+      overflow-x: auto;
+    }
+  </style>
 
           <div class="bottom-bar">
 

@@ -19,7 +19,6 @@ def load_keywords_section(filepath, section):
 def check_diff_keywords(section, log_prefix, match_line=True, name_only=False):
     ignorefiles=getallowfilepaths()
 
-    print(ignorefiles)
     keywords = load_keywords_section("projects/00-Secret/keywords.txt", section)
     if not keywords:
         return False

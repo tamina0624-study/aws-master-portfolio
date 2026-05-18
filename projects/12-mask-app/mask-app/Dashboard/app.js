@@ -1,94 +1,132 @@
+// マスクタイプボタンのトグル動作
+window.addEventListener("DOMContentLoaded", function() {
+  const btnIds = ["btn-jwt", "btn-awskey", "btn-custom", "btn-email", "btn-ipv4", "btn-entropy"];
+  btnIds.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.addEventListener("click", function() {
+        btn.classList.toggle("active");
+      });
+    }
+  });
+});
 const rules = [
 
   // IPv4
   {
     name: "IPv4",
     regex: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
-    replace: "[IP_ADDRESS]"
+    replace: "xxxxxxx",
+    color: "#8e24aa", // 紫
+    class: "mask-ipv4"
   },
 
   // Email
   {
     name: "Email",
     regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
-    replace: "[EMAIL]"
+    replace: "xxxxxxx",
+    color: "#fbc02d", // 黄
+    class: "mask-email"
   },
 
   // URL
   {
     name: "URL",
     regex: /https?:\/\/[^\s]+/g,
-    replace: "[URL]"
+    replace: "xxxxxxx",
+    color: "#00bcd4",
+    class: "mask-url"
   },
 
   // AWS Access Key
   {
     name: "AWS Access Key",
     regex: /AKIA[0-9A-Z]{16}/g,
-    replace: "[AWS_ACCESS_KEY]"
+    replace: "xxxxxxx",
+    color: "#1e88e5", // 青
+    class: "mask-awskey"
   },
 
   // JWT
   {
     name: "JWT",
     regex: /eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/g,
-    replace: "[JWT_TOKEN]"
+    replace: "xxxxxxx",
+    color: "#e53935", // 赤
+    class: "mask-jwt"
   },
 
   // Bearer Token
   {
     name: "Bearer Token",
     regex: /Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi,
-    replace: "Bearer [TOKEN]"
+    replace: "xxxxxxx",
+    color: "#222",
+    class: "mask-bearer"
   },
 
   // Cookie
   {
     name: "Cookie",
     regex: /(cookie\s*:\s*)(.+)/gi,
-    replace: "$1[MASKED_COOKIE]"
+    replace: "xxxxxxx",
+    color: "#43a047",
+    class: "mask-cookie"
   },
 
   // Authorization Header
   {
     name: "Authorization",
     regex: /(authorization\s*:\s*)(.+)/gi,
-    replace: "$1[MASKED_AUTH]"
+    replace: "xxxxxxx",
+    color: "#222",
+    class: "mask-auth"
   },
 
   // Generic Secrets
   {
     name: "Generic Secret",
     regex: /((password|passwd|pwd|secret|secret_key|apikey|api_key|token|access_token|refresh_token|client_secret|private_key)\s*[=:]\s*)(.+)/gi,
-    replace: "$1[MASKED]"
+    replace: "xxxxxxx",
+    color: "#00bcd4",
+    class: "mask-generic"
   },
 
   // JSON style secrets
   {
     name: "JSON Secret",
     regex: /("(password|secret|token|apikey|api_key|client_secret|private_key)"\s*:\s*")([^"]+)"/gi,
-    replace: "$1[MASKED]\""
+    replace: "xxxxxxx",
+    color: "#00bcd4",
+    class: "mask-json"
   },
 
   // .env style
   {
     name: ".env Secret",
     regex: /^([A-Z0-9_]*(PASSWORD|SECRET|TOKEN|API_KEY)[A-Z0-9_]*=)(.+)$/gim,
-    replace: "$1[MASKED]"
+    replace: "xxxxxxx",
+    color: "#00bcd4",
+    class: "mask-env"
   },
 
   // PEM Private Key
   {
     name: "Private Key",
     regex: /-----BEGIN PRIVATE KEY-----[\s\S]+?-----END PRIVATE KEY-----/g,
-    replace: "[PRIVATE_KEY]"
+    replace: "xxxxxxx",
+    color: "#222",
+    class: "mask-pem"
   },
 
   // Credit Card
   {
     name: "Credit Card",
     regex: /\b(?:\d[ -]*?){13,16}\b/g,
-    replace: "[CREDIT_CARD]"
+    replace: "xxxxxxx",
+    color: "#ffb84f",
+    class: "mask-cc"
   }
 
 ];
@@ -163,7 +201,7 @@ function maskCustomKeywords(text) {
     const before = result;
     result = result.replace(regex, function(match) {
       count++;
-      return "[CUSTOM_SENSITIVE]";
+      return "xxxxxxx";
     });
   }
   return { result, count };
@@ -191,38 +229,60 @@ function calculateEntropy(str) {
   return entropy;
 }
 
+function getEntropyMinValue() {
+  // スライダーまたは数値入力から値を取得
+  const slider = document.getElementById("entropyMin");
+  const number = document.getElementById("entropyMinNumber");
+  if (slider && number) {
+    // どちらかの値を返す（同期されている想定）
+    return parseFloat(slider.value) || 3.5;
+  }
+  return 3.5;
+}
+
 function maskHighEntropyStrings(text) {
-
-  const regex =
-    /[A-Za-z0-9+/_\-=\.:]{20,}/g;
-
+  const regex = /[A-Za-z0-9+/_\-=\.:]{20,}/g;
+  const entropyMin = getEntropyMinValue();
   return text.replace(regex, (match) => {
-
-    const hasLetter =
-      /[A-Za-z]/.test(match);
-
-    const hasNumber =
-      /\d/.test(match);
-
+    const hasLetter = /[A-Za-z]/.test(match);
+    const hasNumber = /\d/.test(match);
     if (!hasLetter || !hasNumber) {
       return match;
     }
-
-    const entropy =
-      calculateEntropy(match);
-
-    if (entropy > 3.5) {
-
-      return "[HIGH_ENTROPY_SECRET]";
+    const entropy = calculateEntropy(match);
+    if (entropy > entropyMin) {
+      return "xxxxxxx";
     }
-
     return match;
   });
 }
+// エントロピー最小値コントロールの同期処理
+window.addEventListener("DOMContentLoaded", function() {
+  const slider = document.getElementById("entropyMin");
+  const number = document.getElementById("entropyMinNumber");
+  if (slider && number) {
+    // スライダー変更時に数値入力を更新
+    slider.addEventListener("input", function() {
+      number.value = slider.value;
+    });
+    // 数値入力変更時にスライダーを更新
+    number.addEventListener("input", function() {
+      let val = parseFloat(number.value);
+      if (isNaN(val)) val = 3.5;
+      if (val < 1) val = 1;
+      if (val > 6) val = 6;
+      slider.value = val;
+      number.value = val;
+    });
+  }
+});
 
 
+
+// テキストとHTML両方返すバージョン
 function maskText(text) {
   let result = text;
+  let htmlResult = text;
   let counts = {
     email: 0,
     api: 0,
@@ -230,20 +290,64 @@ function maskText(text) {
     other: 0
   };
 
-  // カスタム辞書
-  const customRes = maskCustomKeywords(result);
-  result = customRes.result;
-  counts.custom = customRes.count;
+  // ボタンのactive状態を取得
+  const isActive = {
+    jwt: document.getElementById("btn-jwt")?.classList.contains("active"),
+    awskey: document.getElementById("btn-awskey")?.classList.contains("active"),
+    custom: document.getElementById("btn-custom")?.classList.contains("active"),
+    email: document.getElementById("btn-email")?.classList.contains("active"),
+    ipv4: document.getElementById("btn-ipv4")?.classList.contains("active"),
+    entropy: document.getElementById("btn-entropy")?.classList.contains("active"),
+  };
 
+  // カスタム辞書
+  if (!isActive.custom) {
+    const customRes = maskCustomKeywords(result);
+    result = customRes.result;
+    // HTML用も同じ置換（緑色）
+    htmlResult = htmlResult.replace(new RegExp(customKeywords.map(k=>escapeRegex(k.keyword)).join('|'), 'gu'), function(match) {
+      return '<span class="masked-highlight mask-custom" style="background:#43a047;color:#fff;">xxxxxxx</span>';
+    });
+    counts.custom = customRes.count;
+  }
   // エントロピー検出（カウント対象外）
-  result = maskHighEntropyStrings(result);
+  if (!isActive.entropy) {
+    // テキスト用
+    result = maskHighEntropyStrings(result);
+    // HTML用（シアン色）
+    htmlResult = htmlResult.replace(/[A-Za-z0-9+/_\-=\.:]{20,}/g, (match) => {
+      const hasLetter = /[A-Za-z]/.test(match);
+      const hasNumber = /\d/.test(match);
+      if (!hasLetter || !hasNumber) return match;
+      const entropy = calculateEntropy(match);
+      if (entropy > getEntropyMinValue()) {
+        return '<span class="masked-highlight mask-entropy" style="background:#00bcd4;color:#fff;">xxxxxxx</span>';
+      }
+      return match;
+    });
+  }
 
   // 通常ルール
   for (const rule of rules) {
     let matchCount = 0;
+    // ルールごとにactive判定
+    if (
+      (rule.name === "JWT" && isActive.jwt) ||
+      (rule.name === "AWS Access Key" && isActive.awskey) ||
+      (rule.name === "Custom" && isActive.custom) ||
+      (rule.name === "Email" && isActive.email) ||
+      (rule.name === "IPv4" && isActive.ipv4)
+    ) {
+      continue;
+    }
     result = result.replace(rule.regex, function(match) {
       matchCount++;
       return rule.replace;
+    });
+    // HTML用: マスク部分をspanでラップ（色分け）
+    htmlResult = htmlResult.replace(rule.regex, function(match) {
+      matchCount++;
+      return `<span class="masked-highlight ${rule.class}" style="background:${rule.color};color:#fff;">${rule.replace}</span>`;
     });
     // カウント割り振り
     if (rule.name === "Email") {
@@ -261,7 +365,7 @@ function maskText(text) {
   }
 
   UpdateMaskedNumber(counts);
-  return { maskedText: result, counts };
+  return { maskedText: result, htmlMasked: htmlResult, counts };
 }
 
 function UpdateMaskedNumber(counts) {
@@ -299,41 +403,30 @@ function UpdateMaskedNumber(counts) {
 
 }
 
-document
-  .getElementById("maskButton")
-  .addEventListener("click", () => {
-
-    const original =
-      inputText.value;
-
-    const masked =
-      maskText(original);
-
-    outputText.value = masked;
-
-  });
 
 document
   .getElementById("maskButton")
   .addEventListener("click", () => {
     const original = inputText.value;
-    const { maskedText, counts } = maskText(original);
-    outputText.value = maskedText;
+    const { maskedText, htmlMasked, counts } = maskText(original);
+    // テキストはクリップボード用に保持、divにはHTMLで表示
+    outputText.textContent = maskedText;
+    outputText.innerHTML = htmlMasked;
+    // コピー用に値を保持（グローバル変数で）
+    window._lastMaskedText = maskedText;
   });
+
 
 document
   .getElementById("copyButton")
   .addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(
-        outputText.value
-      );
-      status.textContent =
-        "コピーしました";
+      // div表示なので、テキストのみコピー
+      await navigator.clipboard.writeText(window._lastMaskedText || "");
+      status.textContent = "コピーしました";
     } catch (err) {
       console.error(err);
-      status.textContent =
-        "コピー失敗";
+      status.textContent = "コピー失敗";
     }
   });
 

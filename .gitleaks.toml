@@ -1,3 +1,15 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "aws-access-key"
+
+description = "AWS Access Key"
+
+regex = '''(?i)(AKIA|ASIA|AIDA|AGPA)[0-9A-Z]{16}'''
+
+tags = ["aws", "key"]
+
 [allowlist]
 description = "ignore mock UI files"
 

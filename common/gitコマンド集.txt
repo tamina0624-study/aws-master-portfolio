@@ -19,10 +19,10 @@ git reset --soft HEAD~1
 git rm --cached -r .
 
 #git logの削除
- git log --all -- path/to/file
+git log --all -- path/to/file
 
- #キャッシュ削除
- Remove-Item -Recurse -Force $HOME\.cache\pre-commit
+#キャッシュ削除
+Remove-Item -Recurse -Force $HOME\.cache\pre-commit
 
 #git index 修正
 git rm --cached -r .

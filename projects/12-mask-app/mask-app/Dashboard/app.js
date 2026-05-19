@@ -131,6 +131,19 @@ const rules = [
 
 ];
 
+const exclude_rules = [
+  // datetime
+  {
+    name: "Datetime",
+    regex: /\b\d{4}[-/]\d{1,2}[-/]\d{1,2}[ T]\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?\b/g,
+  },
+  {
+    name: "Credit Card",
+    regex: /\b(?:\d[ -]*?){13,16}\b/g,
+  }
+
+];
+
 const inputText =
   document.getElementById("inputText");
 
@@ -207,7 +220,38 @@ function maskCustomKeywords(text) {
   return { result, count };
 }
 
+
+function checkExcludeRules(text) {
+
+  for (const rule of exclude_rules) {
+
+    // lastIndexリセット（gフラグ対策）
+    rule.regex.lastIndex = 0;
+
+    const result = rule.regex.exec(text);
+
+    if (result) {
+      return {
+        matched: true,
+        rule: rule.name,
+        matchText: result[0]
+      };
+    }
+  }
+
+  return {
+    matched: false,
+    rule: null,
+    matchText: null
+  };
+}
+
 function calculateEntropy(str) {
+
+  if(checkExcludeRules(str).matched)
+  {
+    return 0;
+  }
 
   const map = {};
 
@@ -240,7 +284,8 @@ function getEntropyMinValue() {
   return 3.5;
 }
 
-function maskHighEntropyStrings(text) {
+function maskHighEntropyStrings(text, countedEntropy) {
+
   const regex = /[A-Za-z0-9+/_\-=\.:]{20,}/g;
   const entropyMin = getEntropyMinValue();
   return text.replace(regex, (match) => {
@@ -251,9 +296,10 @@ function maskHighEntropyStrings(text) {
     }
     const entropy = calculateEntropy(match);
     if (entropy > entropyMin) {
-      return "xxxxxxx";
+      countedEntropy++;
+      return ["xxxxxxx",countedEntropy];
     }
-    return match;
+    return [match, countedEntropy];
   });
 }
 // エントロピー最小値コントロールの同期処理
@@ -305,15 +351,25 @@ function maskText(text) {
     const customRes = maskCustomKeywords(result);
     result = customRes.result;
     // HTML用も同じ置換（緑色）
-    htmlResult = htmlResult.replace(new RegExp(customKeywords.map(k=>escapeRegex(k.keyword)).join('|'), 'gu'), function(match) {
-      return '<span class="masked-highlight mask-custom" style="background:#43a047;color:#fff;">xxxxxxx</span>';
-    });
+    if (customKeywords.length > 0) {
+      htmlResult = htmlResult.replace(
+        new RegExp(customKeywords.map(k => escapeRegex(k.keyword)).join('|'), 'gu'),
+        function(match) {
+          return '<span class="masked-highlight mask-custom" style="background:#43a047;color:#fff;">xxxxxxx</span>';
+        }
+      );
+    }
     counts.custom = customRes.count;
   }
+
   // エントロピー検出（カウント対象外）
-  if (!isActive.entropy) {
+  var countedEntropy = 0;
+  if (!isActive.entropy)
+  {
     // テキスト用
-    result = maskHighEntropyStrings(result);
+    result_array = maskHighEntropyStrings(result,countedEntropy);
+    result = result_array[0];
+    countedEntropy = result_array[1];
     // HTML用（シアン色）
     htmlResult = htmlResult.replace(/[A-Za-z0-9+/_\-=\.:]{20,}/g, (match) => {
       const hasLetter = /[A-Za-z]/.test(match);
@@ -321,6 +377,7 @@ function maskText(text) {
       if (!hasLetter || !hasNumber) return match;
       const entropy = calculateEntropy(match);
       if (entropy > getEntropyMinValue()) {
+        countedEntropy++;
         return '<span class="masked-highlight mask-entropy" style="background:#00bcd4;color:#fff;">xxxxxxx</span>';
       }
       return match;
@@ -363,6 +420,7 @@ function maskText(text) {
       counts.other += matchCount;
     }
   }
+  counts.other += countedEntropy;
 
   UpdateMaskedNumber(counts);
   return { maskedText: result, htmlMasked: htmlResult, counts };

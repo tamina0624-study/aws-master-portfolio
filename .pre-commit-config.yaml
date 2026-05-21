@@ -17,6 +17,7 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-added-large-files
+        exclude: ^Top\.png$
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-merge-conflict

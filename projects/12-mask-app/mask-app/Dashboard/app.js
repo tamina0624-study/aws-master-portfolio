@@ -285,10 +285,10 @@ function getEntropyMinValue() {
 }
 
 function maskHighEntropyStrings(text, countedEntropy) {
-
   const regex = /[A-Za-z0-9+/_\-=\.:]{20,}/g;
   const entropyMin = getEntropyMinValue();
-  return text.replace(regex, (match) => {
+  let count = countedEntropy;
+  const result = text.replace(regex, (match) => {
     const hasLetter = /[A-Za-z]/.test(match);
     const hasNumber = /\d/.test(match);
     if (!hasLetter || !hasNumber) {
@@ -296,12 +296,14 @@ function maskHighEntropyStrings(text, countedEntropy) {
     }
     const entropy = calculateEntropy(match);
     if (entropy > entropyMin) {
-      countedEntropy++;
-      return ["xxxxxxx",countedEntropy];
+      count++;
+      return "xxxxxxx";
     }
-    return [match, countedEntropy];
+    return match;
   });
+  return { result, count };
 }
+
 // エントロピー最小値コントロールの同期処理
 window.addEventListener("DOMContentLoaded", function() {
   const slider = document.getElementById("entropyMin");
@@ -367,9 +369,11 @@ function maskText(text) {
   if (!isActive.entropy)
   {
     // テキスト用
+
     result_array = maskHighEntropyStrings(result,countedEntropy);
-    result = result_array[0];
-    countedEntropy = result_array[1];
+
+    result = result_array["result"];
+    countedEntropy = result_array["count"];
     // HTML用（シアン色）
     htmlResult = htmlResult.replace(/[A-Za-z0-9+/_\-=\.:]{20,}/g, (match) => {
       const hasLetter = /[A-Za-z]/.test(match);
@@ -377,7 +381,6 @@ function maskText(text) {
       if (!hasLetter || !hasNumber) return match;
       const entropy = calculateEntropy(match);
       if (entropy > getEntropyMinValue()) {
-        countedEntropy++;
         return '<span class="masked-highlight mask-entropy" style="background:#00bcd4;color:#fff;">xxxxxxx</span>';
       }
       return match;
@@ -420,6 +423,7 @@ function maskText(text) {
       counts.other += matchCount;
     }
   }
+
   counts.other += countedEntropy;
 
   UpdateMaskedNumber(counts);
@@ -429,6 +433,7 @@ function maskText(text) {
 function UpdateMaskedNumber(counts) {
 
   // 検知数合計
+  console.log("Counts:", counts);
   const total = counts.email + counts.api + counts.custom + counts.other;
 
   // 各stat-cardの値を更新

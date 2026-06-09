@@ -1,0 +1,135 @@
+AWS CLI で S3 バケットを作成するには、まず AWS CLI の認証設定をしてから `aws s3 mb` コマンドを使います。
+
+## 1. AWS CLI の認証設定
+
+まだ設定していなければ実行します。
+
+```bash
+aws configure
+```
+
+入力例：
+
+```text
+AWS Access Key ID [None]: AKIAxxxxxxxx
+AWS Secret Access Key [None]: xxxxxxxxx
+Default region name [None]: ap-northeast-1
+Default output format [None]: json
+```
+
+---
+
+## 2. S3 バケット作成
+
+基本コマンドはこちらです。
+
+```bash
+aws s3 mb s3://バケット名
+```
+
+例：
+
+```bash
+aws s3 mb s3://my-test-bucket-2026
+```
+
+成功すると：
+
+```text
+make_bucket: my-test-bucket-2026
+```
+
+と表示されます。
+
+---
+
+## 3. リージョン指定して作成
+
+東京リージョンの場合：
+
+```bash
+aws s3 mb s3://my-test-bucket-2026 --region ap-northeast-1
+```
+
+大阪リージョン：
+
+```bash
+aws s3 mb s3://my-test-bucket-2026 --region ap-northeast-3
+```
+
+---
+
+## 4. バケット一覧確認
+
+```bash
+aws s3 ls
+```
+
+---
+
+## 5. よくあるエラー
+
+### バケット名重複
+
+```text
+BucketAlreadyExists
+```
+
+S3 バケット名は全世界で一意です。
+
+なので：
+
+```text
+my-bucket
+```
+
+みたいな短い名前は大抵使われています。
+
+おすすめ：
+
+```text
+会社名-用途-環境-年月
+```
+
+例：
+
+```text
+tamina-loglearning-dev-202605
+```
+
+---
+
+## 6. 実務でよく使う作り方
+
+最近は `s3api create-bucket` を使うケースも多いです。
+
+```bash
+aws s3api create-bucket \
+  --bucket my-test-bucket-2026 \
+  --region ap-northeast-1 \
+  --create-bucket-configuration LocationConstraint=ap-northeast-1
+```
+
+こちらの方が細かい設定が可能です。
+
+---
+
+## 7. PowerShell の場合
+
+PowerShell でも同じです。
+
+```powershell
+aws s3 mb s3://my-test-bucket-2026 --region ap-northeast-1
+```
+
+---
+
+ついでに必要なら、
+
+* バケット暗号化
+* パブリックアクセスブロック
+* バージョニング有効化
+* Lifecycle設定
+* Terraformでの作成
+
+あたりも、実務向けにまとめて説明できます。

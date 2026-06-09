@@ -1,0 +1,9 @@
+aws ec2 describe-flow-logs --region us-east-2
+
+
+aws ec2 describe-flow-logs `
+  --query "FlowLogs[*].[FlowLogId,ResourceId,LogDestinationType,LogGroupName,TrafficType,FlowLogStatus]" `
+  --output table --region us-east-2
+
+
+aws ec2 create-flow-logs --region us-east-2

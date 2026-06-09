@@ -30,37 +30,75 @@
 # ================================
 
 module "vpc" {
-	source = "./modules/vpc"
+  source         = "./modules/vpc"
+  s3_bucket_name = module.log_bucket.s3_bucket_name
 }
 
 module "security_group" {
-	source = "./modules/security_group"
-	vpc_id = module.vpc.vpc_id
+  source = "./modules/security_group"
+  vpc_id = module.vpc.vpc_id
+}
+
+# S3バケットモジュール呼び出し
+module "log_bucket" {
+  source      = "./modules/s3"
+  vpc_id      = module.vpc.vpc_id
+  bucket_name = var.bucket_name
+  environment = var.environment
+}
+
+variable "bucket_name" {
+  description = "S3バケット名"
+  type        = string
+  default     = "loglearning-bucket"
+}
+
+variable "environment" {
+  description = "環境名"
+  type        = string
+  default     = "dev"
 }
 
 module "ec2" {
-	source = "./modules/ec2"
-	subnet_id = module.vpc.public_subnet_1_id
-	security_group_id = module.security_group.ec2_web_sg_id
+  source            = "./modules/ec2"
+  subnet_id         = module.vpc.public_subnet_1_id
+  security_group_id = module.security_group.ec2_web_sg_id
 }
 
 module "alb" {
-	source = "./modules/alb"
-	alb_sg_id = module.security_group.alb_sg_id
-	subnet_1_ids = module.vpc.public_subnet_1_id
-	subnet_2_ids = module.vpc.public_subnet_2_id
-	vpc_id = module.vpc.vpc_id
-	target_instance_id = module.ec2.instance_id
+  source                      = "./modules/alb"
+  alb_sg_id                   = module.security_group.alb_sg_id
+  subnet_1_ids                = module.vpc.public_subnet_1_id
+  subnet_2_ids                = module.vpc.public_subnet_2_id
+  vpc_id                      = module.vpc.vpc_id
+  target_instance_id          = module.ec2.instance_id
+  alb_access_logs_enabled     = true
+  alb_access_logs_bucket      = "log-learning-alb"
+  alb_access_logs_prefix      = ""
+  alb_connection_logs_enabled = true
+  alb_connection_logs_bucket  = "log-learning-alb"
+  alb_connection_logs_prefix  = ""
 }
 
 module "route53" {
-	source = "./modules/route53"
-	zone_name      = "xxxxx.test.example.com" # ←適宜修正
-	alb_dns_name   = module.alb.alb_dns_name
-	alb_zone_id    = module.alb.alb_zone_id
+  source       = "./modules/route53"
+  zone_name    = "xxxxx.test.example.com" # ←適宜修正
+  alb_dns_name = module.alb.alb_dns_name
+  alb_zone_id  = module.alb.alb_zone_id
 }
 
 module "waf" {
-	source = "./modules/waf"
-	alb_arn = module.alb.alb_arn
+  source  = "./modules/waf"
+  alb_arn = module.alb.alb_arn
+}
+
+module "lambda" {
+  source = "./modules/lambda"
+}
+
+module "rds" {
+  source = "./modules/rds"
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = [module.vpc.public_subnet_1_id, module.vpc.public_subnet_2_id]
 }

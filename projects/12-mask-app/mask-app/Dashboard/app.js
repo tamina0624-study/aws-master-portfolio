@@ -1,6 +1,6 @@
 // マスクタイプボタンのトグル動作
 window.addEventListener("DOMContentLoaded", function() {
-  const btnIds = ["btn-jwt", "btn-awskey", "btn-custom", "btn-email", "btn-ipv4", "btn-entropy"];
+  const btnIds = ["btn-jwt", "btn-awskey", "btn-custom", "btn-email", "btn-ipv4", "btn-entropy", "btn-url"];
   btnIds.forEach(id => {
     const btn = document.getElementById(id);
     if (btn) {
@@ -35,7 +35,7 @@ const rules = [
     name: "URL",
     regex: /https?:\/\/[^\s]+/g,
     replace: "xxxxxxx",
-    color: "#00bcd4",
+    color: "#6d4c41", // 茶
     class: "mask-url"
   },
 
@@ -346,6 +346,7 @@ function maskText(text) {
     email: document.getElementById("btn-email")?.classList.contains("active"),
     ipv4: document.getElementById("btn-ipv4")?.classList.contains("active"),
     entropy: document.getElementById("btn-entropy")?.classList.contains("active"),
+    url: document.getElementById("btn-url")?.classList.contains("active"),
   };
 
   // カスタム辞書
@@ -396,7 +397,8 @@ function maskText(text) {
       (rule.name === "AWS Access Key" && isActive.awskey) ||
       (rule.name === "Custom" && isActive.custom) ||
       (rule.name === "Email" && isActive.email) ||
-      (rule.name === "IPv4" && isActive.ipv4)
+      (rule.name === "IPv4" && isActive.ipv4) ||
+      (rule.name === "URL" && isActive.url)
     ) {
       continue;
     }
@@ -405,8 +407,7 @@ function maskText(text) {
       return rule.replace;
     });
     // HTML用: マスク部分をspanでラップ（色分け）
-    htmlResult = htmlResult.replace(rule.regex, function(match) {
-      matchCount++;
+      htmlResult = htmlResult.replace(rule.regex, function(match) {
       return `<span class="masked-highlight ${rule.class}" style="background:${rule.color};color:#fff;">${rule.replace}</span>`;
     });
     // カウント割り振り

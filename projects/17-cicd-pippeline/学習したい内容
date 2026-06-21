@@ -1,0 +1,213 @@
+CICD構築 学習計画（実装ベース）
+
+1. 目的と到達目標
+- 目的:
+	PythonアプリとTerraformインフラを対象に、品質とセキュリティを担保したCI/CDを構築する。
+- 到達目標（Doneの定義）:
+	1) Pull Request作成時に自動で品質チェックが走る。
+	2) mainマージ時にdev環境へ自動デプロイできる。
+	3) stg/prodは手動承認付きでデプロイできる。
+	4) 失敗時にログ確認とロールバックが実施できる。
+
+2. 対象範囲
+- インフラ: Terraform（fmt/validate/plan）
+- アプリ: Python
+- テスト: 単体テスト、自動実行
+- セキュリティ: 依存関係スキャン、シークレット検知、IaCスキャン
+
+3. ブランチ戦略と環境
+- ブランチ運用:
+	- feature/*: 開発
+	- develop: 統合確認
+	- main: 本番反映用
+- 環境:
+	- dev: 自動デプロイ
+	- stg: 手動承認後デプロイ
+	- prod: 手動承認後デプロイ（本番）
+
+4. CI設計（PR時）
+4.1 Pythonコード品質
+- Lint: ruff
+- Format: black（またはruff format）
+- Type check: mypy
+
+4.2 自動テスト
+- pytest実行
+- カバレッジ閾値を設定（例: 80%以上）
+
+4.3 セキュリティチェック
+- 依存関係脆弱性: pip-audit
+- シークレット検知: gitleaks
+- Terraformセキュリティ: tfsec（またはcheckov）
+
+4.4 Terraformチェック
+- terraform fmt -check
+- terraform validate
+- terraform plan（PRで差分確認）
+
+5. CD設計（mainマージ時）
+- dev: 自動デプロイ
+- stg/prod: 承認付きデプロイ
+- デプロイ後: ヘルスチェック
+- 失敗時: 直前バージョンへロールバック
+
+6. シークレット・権限管理
+- シークレットはリポジトリに保存しない。
+- CI/CD実行ユーザーは最小権限（Least Privilege）にする。
+- クラウド資格情報はOIDC連携を優先し、長期キーを避ける。
+
+7. 監視・通知
+- パイプライン失敗時に通知（例: Slack/メール）
+- デプロイ結果を記録（成功/失敗、実行者、実行時刻）
+- 監視アラートと連携し、障害時に原因追跡できる状態にする。
+
+8. 学習ステップ（4週間目安）
+- Week 1: CIの最小構成
+	- PythonのLint/Format/Testを自動化
+	- PRで結果が確認できる状態にする
+- Week 2: セキュリティ強化
+	- pip-audit、gitleaks、tfsecを追加
+	- 失敗時にマージ不可ルールを設定
+- Week 3: Terraform検証とデプロイ準備
+	- fmt/validate/planをPRに組み込む
+	- dev環境への自動デプロイ作成
+- Week 4: 本番運用想定
+	- stg/prodの手動承認フロー
+	- ロールバック手順と通知整備
+
+9. 完了条件チェックリスト
+- [ ] PR時にPython品質チェックが自動実行される
+- [ ] PR時にTerraformチェックとPlan確認ができる
+- [ ] PR時にセキュリティチェックが自動実行される
+- [ ] mainマージでdevへ自動デプロイされる
+- [ ] stg/prodは承認付きでデプロイできる
+- [ ] 失敗時にロールバック手順を実行できる
+- [ ] 通知とログで失敗原因を追跡できる
+
+10. 次に作る具体物
+- CI設定ファイル（例: GitHub Actionsワークフロー）
+- テストコード（pytest）
+- セキュリティツール設定ファイル
+- Terraform実行手順書（plan/apply/rollback）
+
+11. 具体的な作業手順（この順番で実施）
+
+Step 0: 前提準備（初日）
+- 実施内容:
+	- リポジトリに作業用ブランチを作成する（feature/cicd-bootstrap など）。
+	- 対象フォルダを決める（Pythonコード配置場所、Terraform配置場所）。
+	- CIで使うシークレット名を決める（例: AWS_ROLE_ARN, AWS_REGION）。
+- 完了判定:
+	- ブランチが作成済み。
+	- 対象ディレクトリと環境変数一覧がメモ化済み。
+
+Step 1: Python品質チェックをローカルで成立させる
+- 実施内容:
+	- 必要ツールを導入する: ruff / mypy / pytest / pytest-cov / pip-audit。
+	- 設定ファイルを作成する（pyproject.toml または各種設定ファイル）。
+	- ローカルで順に実行し、エラーを解消する。
+		- ruff check .
+		- ruff format --check .
+		- mypy .
+		- pytest -q --maxfail=1 --disable-warnings --cov --cov-fail-under=80
+- 完了判定:
+	- 上記4コマンドがローカルで成功する。
+
+Step 2: Terraform品質チェックをローカルで成立させる
+- 実施内容:
+	- Terraform対象ディレクトリで初期化する（terraform init）。
+	- チェックを実行して修正する。
+		- terraform fmt -check -recursive
+		- terraform validate
+		- terraform plan -no-color
+	- セキュリティチェックを導入する（tfsec または checkov）。
+- 完了判定:
+	- fmt/validate/planが成功し、セキュリティ警告に対する方針（修正または例外化）を記録済み。
+
+Step 3: CIワークフローを作成する（PRトリガー）
+- 実施内容:
+	- .github/workflows/ci.yml を作成する。
+	- ジョブを分割する:
+		- python-quality（ruff, mypy）
+		- python-test（pytest + coverage）
+		- security-scan（pip-audit, gitleaks, tfsec）
+		- terraform-check（fmt, validate, plan）
+	- PR作成時に必ず実行されるよう設定する。
+- 完了判定:
+	- ダミーPRで全ジョブが起動する。
+	- 失敗時にPR上で原因が確認できる。
+
+Step 4: ブランチ保護ルールを設定する
+- 実施内容:
+	- main（必要ならdevelop）に必須ステータスチェックを設定する。
+	- 必須レビュー人数、直接push禁止、マージ条件を設定する。
+	- 必須ステータスチェックは以下を指定する。
+		- python-quality
+		- python-test
+		- security-scan
+		- terraform-check
+	- 実行コマンド（PowerShell）:
+		- Dry Run: `./projects/17-cicd-pippeline/scripts/apply-branch-protection.ps1 -DryRun`
+		- 適用: `./projects/17-cicd-pippeline/scripts/apply-branch-protection.ps1`
+	- 事前準備:
+		- `GITHUB_TOKEN` にリポジトリ管理権限を持つトークンを設定する。
+- 完了判定:
+	- CIが落ちているPRはマージできない状態になっている。
+	- mainへの直接pushが拒否される。
+
+Step 5: CDワークフローを作成する（mainマージトリガー）
+- 実施内容:
+	- .github/workflows/cd.yml を作成する。
+	- mainマージ時にdevへ自動デプロイする。
+	- stg/prodはEnvironment保護ルールで承認必須にする。
+	- AWS認証はOIDCを使い、長期アクセスキーを使わない。
+	- デプロイジョブは `deploy-dev -> deploy-stg -> deploy-prod` の順で実行する。
+	- GitHubのEnvironment（dev/stg/prod）を作成し、stg/prodにRequired reviewersを設定する。
+	- 必須変数:
+		- `AWS_ROLE_ARN`
+		- `AWS_REGION`（未設定時はus-east-2）
+- 完了判定:
+	- mainへマージするとdevデプロイが自動実行される。
+	- stg/prodは承認なしで進まない。
+	- `AWS_ROLE_ARN` 未設定時はデプロイがスキップされ、理由がログに出力される。
+
+Step 6: デプロイ後検証とロールバック手順を作る
+- 実施内容:
+	- ヘルスチェック項目を定義する（S3バケット存在確認、バージョニング確認、タグ確認）。
+	- ヘルスチェック自動実行スクリプトを作成: `scripts/health_check.py`
+	- CD ワークフローにヘルスチェックステップを統合：
+		- 各環境デプロイ後に自動実行
+		- 失敗時はジョブを停止
+	- ロールバック手順書を作成: `docs/DEPLOYMENT_HEALTH_AND_ROLLBACK.md`
+	- ロールバック自動化スクリプト: `scripts/rollback.ps1`
+	- 失敗時対応手順（シナリオ別）を記載
+- 完了判定:
+	- CD ワークフロー実行時にヘルスチェックが自動実行される
+	- ローカルでロールバックスクリプトを手動実行できる
+	- 手順書に沿ってロールバックと検証を再現できる
+
+Step 7: 通知と運用ログを整備する
+- 実施内容:
+	- CI/CD失敗時通知を設定する（Slackまたはメール）。
+	- 実行履歴を残す（誰が、いつ、どのコミットを、どの環境へ適用したか）。
+	- 月次で失敗原因を振り返るテンプレートを作成する。
+- 完了判定:
+	- 失敗イベント発生時に通知が届く。
+	- 過去実行の追跡が可能。
+
+Step 8: 最終リハーサル
+- 実施内容:
+	- 疑似障害シナリオで演習する。
+		- 例1: テスト失敗
+		- 例2: tfsec検知
+		- 例3: デプロイ後ヘルスチェックNG
+	- 検知、原因特定、復旧までの所要時間を測定する。
+- 完了判定:
+	- 3シナリオすべてで手順通りに対応完了。
+	- 改善点が次アクションとして記録済み。
+
+12. 推奨成果物（提出・公開しやすい形）
+- 設計資料: CI/CD構成図、ブランチ戦略、承認フロー
+- 実装: ci.yml / cd.yml / テストコード / セキュリティ設定
+- 運用: ロールバック手順書、障害対応記録テンプレート
+- 証跡: 実行ログ、PR画面キャプチャ、失敗から復旧までの記録

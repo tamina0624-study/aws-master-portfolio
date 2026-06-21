@@ -1,0 +1,1 @@
+{"commands":["set -euxo pipefail","mkdir -p /opt/simple-web","echo \"<html><body><h1>Hello from EC2</h1></body></html>\" > /opt/simple-web/index.html","pkill -f \"python3 -m http.server 80\" || true","nohup python3 -m http.server 80 --bind 0.0.0.0 --directory /opt/simple-web >/var/log/simple-web.log 2>&1 &","ss -lntp | grep :80 || true"]}

@@ -1,0 +1,86 @@
+## 1. AWS X-Ray
+
+### 学習内容
+
+- 分散トレーシングの基本
+- リクエストが複数サービスをまたぐときの可視化
+- 遅延箇所、エラー箇所、依存関係の特定方法
+- CloudWatch ServiceLensとの関係
+
+### 確認すべき事項
+
+- どのサービスでトレースを有効化できるか
+- API Gateway、Lambda、EC2、ALBなどをまたぐトレースがどう見えるか
+- セグメント、サブセグメントの見え方
+- レイテンシ、エラー率、スロットリングの見え方
+- サービスマップでボトルネックを特定できるか
+
+### 試す構成案
+
+- API Gateway
+- Lambda
+- RDS
+- CloudWatch Logs
+- X-Ray
+
+API呼び出しからLambda実行、DBアクセスまでを1本の処理として可視化する。
+
+### 異常系の確認例
+
+- Lambdaのタイムアウト
+- DB接続遅延
+- 一部APIで例外を返す
+
+### 学習成果として残すと良い内容
+
+- サービスマップのスクリーンショット
+- 遅延箇所の分析メモ
+- X-Rayを使うと何が早く切り分けできるかの整理
+
+### 今回の検証結果メモ（実施済み）
+
+#### 構成の到達点
+
+- API GatewayをREST APIに変更
+- API Gateway StageでX-Ray tracingを有効化
+- LambdaでX-Ray tracing modeをActiveに設定
+- LambdaとRDSをprivate subnetに配置
+
+#### 正常系で確認できたこと
+
+- API Gateway -> Lambda -> RDS の経路でレスポンスが返ること
+- レスポンス例: `{"data":{"value":1}}`
+- X-Ray上でサービス間の依存関係を確認できること
+
+#### セグメント/サブセグメントの見え方
+
+- 親セグメントとしてAPI Gateway
+- 子セグメントとしてLambda
+- DBアクセス区間がLambda配下のサブセグメントとして表示される
+
+#### レイテンシ、エラー率、スロットリングの確認観点
+
+- レイテンシ
+	- Trace timelineで、どの区間（API Gateway/Lambda/DB）に時間がかかったか確認
+- エラー率
+	- X-RayのError/Faultで異常トレースを抽出
+	- CloudWatch Logsで例外内容を突合
+- スロットリング
+	- API Gateway Stage設定のレート/バースト値を確認
+	- 429発生時はStageのスロットリング設定を優先確認
+
+#### DBタイムアウトの再現方法と結果
+
+- 再現方法
+	- 一時的にRDS SGの3306許可（Lambda SG -> RDS SG）を外す
+- 期待結果
+	- Lambda実行時にDB接続タイムアウト
+	- X-Ray上でDBアクセス区間がボトルネックとして可視化
+- 復旧方法
+	- RDS SGに3306許可（Lambda SG -> RDS SG）を戻す
+
+#### 学習で得た気づき
+
+- X-Ray単体ではなく、CloudWatch Logsと併用すると原因特定が速い
+- HTTP APIとREST APIは同等機能ではなく、X-Ray要件があるならREST APIが適切
+- タイムアウト再現はDB名変更よりネットワーク遮断の方が実運用障害に近い

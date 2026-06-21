@@ -1,0 +1,418 @@
+# AWS監視・分析系サービスの学習整理
+
+このファイルでは、今後学習したいAWSサービスについて、以下の観点で整理する。
+
+- 何を学ぶサービスなのか
+- 何を確認すべきか
+- どのような構成で試すと理解しやすいか
+- どの成果を残せばポートフォリオや運用知識として説明しやすいか
+
+## 学習対象サービス一覧
+
+### 可観測性・監視
+
+- AWS X-Ray
+- Amazon CloudWatch Synthetics
+- CloudWatch RUM
+- CloudWatch ServiceLens
+
+### ネットワーク監視・到達性分析
+
+- AWS Network Manager Infrastructure Performance
+- AWS Transit Gateway Network Manager
+- AWS Network Access Analyzer
+- VPC Reachability Analyzer
+
+### セキュリティ・権限分析
+
+- IAM Access Analyzer
+
+## 学習の全体方針
+
+このテーマは、単に画面を確認するだけではなく、以下の順序で学ぶと理解しやすい。
+
+1. サービスの目的を理解する
+2. どのレイヤーを監視・分析するものかを整理する
+3. 最小構成を作って動かす
+4. 正常系と異常系の両方を確認する
+5. 取得できるメトリクス、ログ、トレース、分析結果を整理する
+6. 運用でどう使うかを言語化する
+
+---
+
+## 1. AWS X-Ray
+
+### 学習内容
+
+- 分散トレーシングの基本
+- リクエストが複数サービスをまたぐときの可視化
+- 遅延箇所、エラー箇所、依存関係の特定方法
+- CloudWatch ServiceLensとの関係
+
+### 確認すべき事項
+
+- どのサービスでトレースを有効化できるか
+- API Gateway、Lambda、EC2、ALBなどをまたぐトレースがどう見えるか
+- セグメント、サブセグメントの見え方
+- レイテンシ、エラー率、スロットリングの見え方
+- サービスマップでボトルネックを特定できるか
+
+### 試す構成案
+
+- API Gateway
+- Lambda
+- DynamoDB または RDS
+- CloudWatch Logs
+- X-Ray
+
+API呼び出しからLambda実行、DBアクセスまでを1本の処理として可視化する。
+
+### 異常系の確認例
+
+- Lambdaのタイムアウト
+- DB接続遅延
+- 一部APIで例外を返す
+
+### 学習成果として残すと良い内容
+
+- サービスマップのスクリーンショット
+- 遅延箇所の分析メモ
+- X-Rayを使うと何が早く切り分けできるかの整理
+
+---
+
+## 2. Amazon CloudWatch Synthetics
+
+### 学習内容
+
+- Canary監視の仕組み
+- 外形監視と内部監視の違い
+- 定期実行での可用性監視
+- 失敗時の通知と証跡取得
+
+### 確認すべき事項
+
+- HTTPエンドポイント監視の設定方法
+- Web画面のクリックや入力の自動確認ができるか
+- スクリーンショット、HAR、ログの取得内容
+- アラーム連携やSNS通知の流れ
+- 実行頻度とコスト感
+
+### 試す構成案
+
+- ALB配下のWebページ
+- API Gatewayのヘルスチェック用エンドポイント
+- CloudWatch Synthetics Canary
+- CloudWatch Alarm
+- SNS
+
+### 異常系の確認例
+
+- 意図的にヘルスチェック失敗を発生させる
+- レスポンス時間を遅延させる
+- 特定ページのDOM要素を変更して検知できるか確認する
+
+### 学習成果として残すと良い内容
+
+- 正常時と異常時のCanary結果比較
+- 監視項目の設計方針
+- どこまでSyntheticsで担保し、どこからアプリ監視へ任せるかの整理
+
+---
+
+## 3. CloudWatch RUM
+
+### 学習内容
+
+- 実ユーザー監視の考え方
+- フロントエンドの遅延、エラー、ユーザー体験の見え方
+- Syntheticsとの違い
+
+### 確認すべき事項
+
+- ページ表示速度、JSエラー、セッション情報の取得項目
+- どの粒度でユーザー行動が見えるか
+- 監視対象Webアプリへの組み込み方法
+- データ保存期間とコスト
+- 個人情報の取り扱いとマスキング配慮
+
+### 試す構成案
+
+- S3 + CloudFront で配信する静的Web
+- もしくは ALB + EC2 の簡易Webアプリ
+- CloudWatch RUM
+- CloudWatch Dashboard
+
+### 異常系の確認例
+
+- JavaScriptエラーを意図的に発生させる
+- ページロードを遅くする
+- 一部リソースを404にする
+
+### 学習成果として残すと良い内容
+
+- 実ユーザー視点の監視で分かること
+- サーバー監視だけでは見えない問題点の整理
+- RUM導入時の注意点
+
+---
+
+## 4. CloudWatch ServiceLens
+
+### 学習内容
+
+- メトリクス、ログ、トレースの統合的な見方
+- X-RayやCloudWatch Logsと組み合わせた監視
+- 障害時の切り分け導線
+
+### 確認すべき事項
+
+- ServiceLens上でどのサービス依存関係が見えるか
+- X-RayトレースとCloudWatchメトリクスの紐づき
+- ログ調査にどれだけスムーズにつながるか
+- 障害箇所の切り分けに使えるか
+
+### 試す構成案
+
+- API Gateway
+- Lambda
+- DynamoDB または RDS
+- CloudWatch Logs
+- X-Ray
+- ServiceLens
+
+### 学習成果として残すと良い内容
+
+- 監視画面の使い分け
+- ServiceLensを入口にすると調査がどう楽になるか
+
+---
+
+## 5. AWS Network Manager Infrastructure Performance
+
+### 学習内容
+
+- グローバルネットワークの監視の考え方
+- ネットワークパフォーマンスの可視化
+- 拠点間やリージョン間接続の状態把握
+
+### 確認すべき事項
+
+- どのネットワークリソースを可視化対象にできるか
+- レイテンシ、パケットロス、到達性など何が見えるか
+- Transit GatewayやSite-to-Site VPNとどう関係するか
+- 運用監視に必要な画面や指標は何か
+
+### 試す構成案
+
+- VPC
+- Transit Gateway
+- Site-to-Site VPN または 複数VPC接続
+- Network Manager
+
+### 学習成果として残すと良い内容
+
+- ネットワーク監視を個別リソースではなく全体視点で見る意義
+- ハイブリッド構成やマルチリージョン構成での使いどころ
+
+---
+
+## 6. AWS Transit Gateway Network Manager
+
+### 学習内容
+
+- Transit Gatewayを中心としたネットワーク管理
+- 接続トポロジの可視化
+- 複数VPCやオンプレ接続の一元把握
+
+### 確認すべき事項
+
+- Transit Gateway接続がどう見えるか
+- アタッチメント情報がどう整理されるか
+- 障害時にどこまで切り分けできるか
+- ネットワーク全体図として説明しやすいか
+
+### 試す構成案
+
+- 2つ以上のVPC
+- Transit Gateway
+- 必要ならVPN接続
+- Network Manager
+
+### 学習成果として残すと良い内容
+
+- 複数拠点・複数VPC環境をどう見える化するか
+- ネットワーク運用者向けの価値
+
+---
+
+## 7. AWS Network Access Analyzer
+
+### 学習内容
+
+- 意図しないネットワークアクセス経路の検出
+- セキュリティレビューにおける活用方法
+- ネットワーク構成の静的分析
+
+### 確認すべき事項
+
+- どのリソース間アクセスを解析できるか
+- パブリック公開、クロスVPC、意図しない経路を検出できるか
+- セキュリティグループ、ルートテーブル、NACLなどがどう判定に影響するか
+- Reachability Analyzerとの違い
+
+### 試す構成案
+
+- Public SubnetのEC2
+- Private SubnetのEC2
+- ALB
+- Security Group
+- Route Table
+- Network Access Analyzer
+
+### 異常系の確認例
+
+- 本来閉じたいポートを開ける
+- 意図せずインターネット到達可能にする
+- セグメント間通信を誤って許可する
+
+### 学習成果として残すと良い内容
+
+- 設計レビューでの使いどころ
+- 事前検知型のセキュリティ確認としての価値
+
+---
+
+## 8. VPC Reachability Analyzer
+
+### 学習内容
+
+- ある送信元から宛先まで通信可能かの解析
+- 通信断の原因切り分け
+- ルート、SG、NACL、GWなどの経路理解
+
+### 確認すべき事項
+
+- EC2からRDS、ALBからEC2、VPC Endpoint経由などの経路を解析できるか
+- 通信不可のとき、どこが遮断点として表示されるか
+- Reachability Analyzerの出力をどこまで信頼できるか
+
+### 試す構成案
+
+- EC2
+- ALB
+- RDS
+- Security Group
+- NACL
+- Route Table
+- Reachability Analyzer
+
+### 異常系の確認例
+
+- SGのインバウンドを閉じる
+- NACLで遮断する
+- ルート不備を作る
+
+### 学習成果として残すと良い内容
+
+- 通信障害調査の標準手順
+- どのレイヤーを順番に疑うべきかの整理
+
+---
+
+## 9. IAM Access Analyzer
+
+### 学習内容
+
+- IAMポリシーやリソースポリシーの外部公開分析
+- 最小権限の確認支援
+- クロスアカウントアクセスの検出
+
+### 確認すべき事項
+
+- S3、IAM Role、KMS、SQS、Lambdaなどで何が分析対象になるか
+- パブリックアクセスや外部アカウント共有を検知できるか
+- 検知結果をどう修正につなげるか
+- Security Hubや運用レビューとどうつなげるか
+
+### 試す構成案
+
+- S3バケットポリシー
+- IAM Role
+- KMS Key
+- SQS Queue Policy
+- IAM Access Analyzer
+
+### 異常系の確認例
+
+- S3をパブリック公開状態に近づける
+- 外部アカウントをPrincipalに含める
+- 過剰な許可を付与する
+
+### 学習成果として残すと良い内容
+
+- 権限レビューの流れ
+- 検知から修正までの具体例
+- 最小権限設計の改善ポイント
+
+---
+
+## 優先順位の提案
+
+学習順は以下が進めやすい。
+
+1. CloudWatch Synthetics
+2. CloudWatch RUM
+3. AWS X-Ray
+4. CloudWatch ServiceLens
+5. VPC Reachability Analyzer
+6. AWS Network Access Analyzer
+7. IAM Access Analyzer
+8. AWS Transit Gateway Network Manager
+9. AWS Network Manager Infrastructure Performance
+
+理由は以下の通り。
+
+- 先にアプリ監視と可観測性を学ぶと、監視の基本が身につく
+- 次にネットワーク到達性とアクセス分析を学ぶと、障害切り分けと設計レビューにつながる
+- 最後に広域ネットワーク管理系へ進むと、より大きな構成の理解につながる
+
+## おすすめの学習構成
+
+最初のハンズオンは、以下のような小さめ構成が扱いやすい。
+
+- Route53
+- ALB
+- EC2 または S3静的Web
+- API Gateway
+- Lambda
+- RDS または DynamoDB
+- CloudWatch Logs
+- X-Ray
+- CloudWatch Synthetics
+- CloudWatch RUM
+- IAM Access Analyzer
+- Reachability Analyzer
+
+この構成なら、フロント、API、バックエンド、権限、通信経路まで一通り学べる。
+
+## 各サービスで共通して確認したい項目
+
+- 何を可視化・分析するサービスか
+- どのAWSサービスと連携するか
+- 導入に必要な前提設定は何か
+- 正常時に何が見えるか
+- 異常時に何が見えるか
+- コストはどこで発生するか
+- 運用でどう使うか
+- 制約事項や注意点は何か
+
+## まとめ
+
+今回学習したいサービス群は、単発の機能ではなく、以下の3つの軸で整理すると理解しやすい。
+
+- 可観測性の強化
+- ネットワーク到達性と構成分析
+- 権限と公開範囲の安全性確認
+
+この整理で学習を進めれば、単なるサービス紹介ではなく、実運用でどのように使うかまで説明できる状態を目指せる。

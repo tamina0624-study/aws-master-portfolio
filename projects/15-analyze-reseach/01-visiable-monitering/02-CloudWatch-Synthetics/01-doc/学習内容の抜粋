@@ -1,0 +1,112 @@
+## 2. Amazon CloudWatch Synthetics
+
+### 学習内容
+
+- Canary監視の仕組み
+- 外形監視と内部監視の違い
+- 定期実行での可用性監視
+- 失敗時の通知と証跡取得
+
+### 確認すべき事項
+
+- HTTPエンドポイント監視の設定方法
+- Web画面のクリックや入力の自動確認ができるか
+- スクリーンショット、HAR、ログの取得内容
+- アラーム連携やSNS通知の流れ
+- 実行頻度とコスト感
+
+### 試す構成案
+
+- ALB配下のWebページ
+- API Gatewayのヘルスチェック用エンドポイント
+- CloudWatch Synthetics Canary
+- CloudWatch Alarm
+- SNS
+
+### 具体的なシステム構成提案
+
+#### 構成の目的
+
+- Web画面監視とAPI監視を分けて、障害の切り分けをしやすくする
+- 失敗時に「どの監視で落ちたか」を即判断できる構成にする
+
+#### 推奨構成（学習用）
+
+- Route 53
+	- `app.example.test` を ALB へ向ける
+	- `api.example.test` を API Gateway へ向ける
+- ALB + EC2（またはECS）
+	- `/` で画面表示
+	- `/health` で200を返す
+- API Gateway + Lambda
+	- `/health` は常時200
+	- `/slow` は意図的に遅延
+	- `/error` は意図的に5xx
+- CloudWatch Synthetics Canary
+	- UI確認用 Canary（ブラウザ操作）
+	- API確認用 Canary（HTTPヘルスチェック）
+- CloudWatch Logs / S3（Canary出力）
+	- スクリーンショット、HAR、実行ログを保存
+- CloudWatch Alarm + SNS
+	- Canary失敗、遅延超過、5xx増加を通知
+
+#### Canaryの役割分担
+
+- Canary A: API可用性監視（軽量）
+	- 対象: `https://api.example.test/health`
+	- 間隔: 1分
+	- 判定: 200かつ応答3秒以内
+- Canary B: Web表示監視（合成ユーザー）
+	- 対象: `https://app.example.test/`
+	- 間隔: 5分
+	- 判定: 主要DOM要素の存在、ボタンクリック可否、最終画面の文言
+- Canary C: 異常検知学習用
+	- 対象: `https://api.example.test/slow`, `https://api.example.test/error`
+	- 間隔: 5分
+	- 判定: 遅延閾値超過や5xxを意図的に検知
+
+#### 監視・通知設計（最小）
+
+- Alarm 1: Canary SuccessPercent < 100
+- Alarm 2: Canary Duration > 閾値（例 3000ms）
+- Alarm 3: Canary Failed > 0
+- 通知先: SNS（メール）
+- 重要度を分ける
+	- P1: `/health` 失敗
+	- P2: 画面DOM不一致
+	- P3: 遅延増加
+
+#### 検証シナリオ
+
+- 正常系
+	- すべてのCanary成功、アラートなし
+- 異常系1（可用性）
+	- Lambdaで`/health`を一時的に500化
+	- Canary A失敗 -> Alarm発火 -> SNS通知
+- 異常系2（遅延）
+	- `/slow`で遅延を注入
+	- Durationアラート発火
+- 異常系3（画面変更）
+	- 監視対象DOMを意図的に変更
+	- Canary B失敗、スクリーンショットで差分確認
+
+#### 学習成果として残すと強い観点
+
+- 監視をAPI系とUI系で分離した理由
+- アラート閾値の根拠（なぜ3秒か、なぜ1分間隔か）
+- 失敗時の一次切り分け手順
+	- Canaryログ確認
+	- 対象サービスログ確認
+	- 復旧確認の再実行
+
+### 異常系の確認例
+
+- 意図的にヘルスチェック失敗を発生させる
+- レスポンス時間を遅延させる
+- 特定ページのDOM要素を変更して検知できるか確認する
+
+### 学習成果として残すと良い内容
+
+- 正常時と異常時のCanary結果比較
+- 監視項目の設計方針
+- どこまでSyntheticsで担保し、どこからアプリ監視へ任せるかの整理

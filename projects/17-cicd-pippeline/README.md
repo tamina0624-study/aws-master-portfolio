@@ -38,11 +38,15 @@ projects/17-cicd-pippeline/
 │   ├── health_check.py              # デプロイ後ヘルスチェック
 │   └── rollback.ps1                 # ロールバック手順
 ├── docs/                         # ドキュメント
-│   └── DEPLOYMENT_HEALTH_AND_ROLLBACK.md
+│   ├── DEPLOYMENT_HEALTH_AND_ROLLBACK.md
+│   ├── learning/
+│   │   ├── LEARNING_SUMMARY.md
+│   │   └── 学習したい内容
+│   └── steps/
+│       ├── step0_setup.md
+│       └── step2_terraform_check.md
 ├── pyproject.toml                # Python設定（ruff, mypy, pytest）
 ├── requirements-dev.txt          # 開発依存パッケージ
-├── step0_setup.md                # Step 0 初期設定
-├── step2_terraform_check.md      # Step 2 Terraform検証
 └── README.md                     # このファイル
 
 .github/workflows/
@@ -209,9 +213,10 @@ PYTHON_VERSION = "3.12"
 
 | ドキュメント | 内容 |
 |-----------|------|
-| [学習したい内容](./学習したい内容) | 全体計画（目的、ステップ、完了条件） |
-| [step0_setup.md](./step0_setup.md) | 初期セットアップ内容 |
-| [step2_terraform_check.md](./step2_terraform_check.md) | Terraform検証結果 |
+| [学習したい内容](./docs/learning/学習したい内容) | 全体計画（目的、ステップ、完了条件） |
+| [LEARNING_SUMMARY.md](./docs/learning/LEARNING_SUMMARY.md) | 学習成果の最終まとめ |
+| [step0_setup.md](./docs/steps/step0_setup.md) | 初期セットアップ内容 |
+| [step2_terraform_check.md](./docs/steps/step2_terraform_check.md) | Terraform検証結果 |
 | [DEPLOYMENT_HEALTH_AND_ROLLBACK.md](./docs/DEPLOYMENT_HEALTH_AND_ROLLBACK.md) | ヘルスチェック・ロールバック手順 |
 
 ---

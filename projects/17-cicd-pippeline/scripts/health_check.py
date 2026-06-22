@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """Health check script for CICD deployment validation."""
 
+import json  # noqa: I001
 import sys
-import json
-import time
-from typing import Dict, List
 
-def check_s3_bucket(bucket_name: str) -> Dict[str, bool]:
+def check_s3_bucket(bucket_name: str) -> dict[str, bool]:
     """Check S3 bucket accessibility and basic properties."""
     import boto3
     from botocore.exceptions import ClientError

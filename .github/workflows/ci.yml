@@ -1,17 +1,27 @@
 name: CI
 
+# 実行トリガー: push / PR（対象パスのみ）または手動実行
 on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "projects/17-cicd-pippeline/**"
+      - ".github/workflows/ci.yml"
   pull_request:
     paths:
       - "projects/17-cicd-pippeline/**"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
 
+# セキュリティスキャンで必要な最小権限（OIDC 想定）
 permissions:
   contents: read
   id-token: write
 
 jobs:
+  # Python コード品質チェック（Lint/Format/型チェック）
   python-quality:
     runs-on: ubuntu-latest
     defaults:
@@ -40,6 +50,7 @@ jobs:
       - name: Mypy
         run: python -m mypy .
 
+  # Python テスト実行（失敗時は PR をブロック）
   python-test:
     runs-on: ubuntu-latest
     defaults:
@@ -62,6 +73,7 @@ jobs:
       - name: Run tests with coverage gate
         run: python -m pytest
 
+  # セキュリティ関連スキャン（依存関係・シークレット・Terraform）
   security-scan:
     runs-on: ubuntu-latest
     defaults:
@@ -92,6 +104,7 @@ jobs:
       - name: Terraform scan (checkov)
         run: python -m checkov.main -d terraform --framework terraform --quiet
 
+  # Terraform の静的検証と（任意）plan 実行
   terraform-check:
     runs-on: ubuntu-latest
     defaults:
@@ -114,6 +127,7 @@ jobs:
         run: terraform validate -no-color
 
       - name: Configure AWS credentials (optional)
+        # AWS_ROLE_ARN があるときだけ plan 用の認証を設定
         if: ${{ vars.AWS_ROLE_ARN != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -121,9 +135,11 @@ jobs:
           aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
 
       - name: Terraform plan
+        # 認証情報がない環境では plan をスキップ
         if: ${{ vars.AWS_ROLE_ARN != '' }}
         run: terraform plan -input=false -no-color
 
       - name: Skip plan note
+        # なぜ plan を実行しなかったかをログに残す
         if: ${{ vars.AWS_ROLE_ARN == '' }}
         run: echo "AWS_ROLE_ARN is not set. Terraform plan was skipped."

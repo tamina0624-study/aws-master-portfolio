@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Health check script for CICD deployment validation."""
 
+# ruff: noqa: I001
 import json
 import sys
 

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Health check script for CICD deployment validation."""
 
-# ruff: noqa: I001
-import json
+import json  # noqa: I001
 import sys
 
 def check_s3_bucket(bucket_name: str) -> dict[str, bool]:

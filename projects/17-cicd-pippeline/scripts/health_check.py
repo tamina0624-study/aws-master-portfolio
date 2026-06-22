@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Health check script for CICD deployment validation."""
 
-import json
 import sys
 
 

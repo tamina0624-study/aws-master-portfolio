@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Health check script for CICD deployment validation."""
 
-import json
 import sys
+
+import json
 
 def check_s3_bucket(bucket_name: str) -> dict[str, bool]:
     """Check S3 bucket accessibility and basic properties."""

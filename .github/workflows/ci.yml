@@ -98,6 +98,8 @@ jobs:
 
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --no-git --source=projects/17-cicd-pippeline
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

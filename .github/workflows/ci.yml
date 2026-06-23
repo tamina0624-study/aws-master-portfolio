@@ -96,8 +96,8 @@ jobs:
       - name: Python dependency audit
         run: python -m pip_audit -r requirements.txt
 
-      - name: Secret scan (placeholder)
-        run: echo "Secret scanning configured (implement scanner as needed)"
+      - name: Secret scan (skipped)
+        run: "true"
 
       - name: Terraform scan (checkov)
         run: python -m checkov.main -d terraform --framework terraform --quiet

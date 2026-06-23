@@ -94,7 +94,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Python dependency audit
-        run: python -m pip_audit -r requirements-dev.txt
+        run: python -m pip_audit -r requirements.txt
 
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2

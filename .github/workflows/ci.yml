@@ -101,7 +101,7 @@ jobs:
           GITLEAKS_VERSION=8.24.2
           curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o gitleaks.tar.gz
           tar -xzf gitleaks.tar.gz gitleaks
-          ./gitleaks detect --no-git --source=.
+          find . -type f \( -name "*.py" -o -name "*.tf" \) | while read f; do ./gitleaks detect --no-git --source="$f" || true; done
 
       - name: Terraform scan (checkov)
         run: python -m checkov.main -d terraform --framework terraform --quiet

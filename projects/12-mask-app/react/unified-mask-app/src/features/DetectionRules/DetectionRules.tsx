@@ -91,7 +91,7 @@ const DetectionRules: React.FC = () => {
                 <div className="label">説明</div>
                 <div className="value">AWS IAMアクセスキーを検知します</div>
                 <div className="label">検知例</div>
-                <div className="code">AKIAIOSFODNN7EXAMPLE</div>
+                <div className="code">AWS_ACCESS_KEY_EXAMPLE</div>
                 <div className="label">置換後</div>
                 <div className="replace">[AWS_ACCESS_KEY]</div>
               </div>

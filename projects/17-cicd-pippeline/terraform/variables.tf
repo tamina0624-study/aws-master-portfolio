@@ -22,6 +22,12 @@ variable "app_name" {
   default     = "sample-app"
 }
 
+variable "create_bucket" {
+  description = "Whether Terraform should create the S3 bucket and related resources"
+  type        = bool
+  default     = true
+}
+
 variable "allowed_source_cidr" {
   description = "CIDR allowed to access S3 bucket"
   type        = string

@@ -55,31 +55,24 @@ jobs:
         run: terraform validate
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
-      - name: Import existing S3 bucket (Dev)
-        run: |
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
-
-          echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
-            echo "✓ Bucket exists in AWS"
-            echo "→ Removing any existing state references..."
-            terraform state rm aws_s3_bucket.app_bucket || true
-
-            echo "→ Importing bucket to Terraform state..."
-            terraform import -var="environment=dev" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
-            echo "✓ Import successful"
-          else
-            echo "✓ Bucket does not exist, will create new one"
-          fi
-        if: ${{ vars.AWS_ROLE_ARN != '' }}
-
       - name: Terraform Plan (Dev)
         run: terraform plan -var="environment=dev"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Dev)
-        run: terraform apply -var="environment=dev" -auto-approve
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
+
+          if terraform apply -var="environment=dev" -auto-approve; then
+            echo "✓ Apply succeeded"
+          else
+            echo "Apply failed. Attempting to import existing bucket..."
+            terraform state rm aws_s3_bucket.app_bucket || true
+            terraform import -var="environment=dev" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            echo "→ Retrying apply after import..."
+            terraform apply -var="environment=dev" -auto-approve
+          fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs
@@ -128,31 +121,24 @@ jobs:
         run: terraform init
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
-      - name: Import existing S3 bucket (Stg)
-        run: |
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
-
-          echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
-            echo "✓ Bucket exists in AWS"
-            echo "→ Removing any existing state references..."
-            terraform state rm aws_s3_bucket.app_bucket || true
-
-            echo "→ Importing bucket to Terraform state..."
-            terraform import -var="environment=stg" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
-            echo "✓ Import successful"
-          else
-            echo "✓ Bucket does not exist, will create new one"
-          fi
-        if: ${{ vars.AWS_ROLE_ARN != '' }}
-
       - name: Terraform Plan (Stg)
         run: terraform plan -var="environment=stg"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Stg)
-        run: terraform apply -var="environment=stg" -auto-approve
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
+
+          if terraform apply -var="environment=stg" -auto-approve; then
+            echo "✓ Apply succeeded"
+          else
+            echo "Apply failed. Attempting to import existing bucket..."
+            terraform state rm aws_s3_bucket.app_bucket || true
+            terraform import -var="environment=stg" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            echo "→ Retrying apply after import..."
+            terraform apply -var="environment=stg" -auto-approve
+          fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs
@@ -205,27 +191,20 @@ jobs:
         run: terraform plan -var="environment=prod"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
-      - name: Import existing S3 bucket (Prod)
+      - name: Terraform Apply (Prod)
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
 
-          echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
-            echo "✓ Bucket exists in AWS"
-            echo "→ Removing any existing state references..."
-            terraform state rm aws_s3_bucket.app_bucket || true
-
-            echo "→ Importing bucket to Terraform state..."
-            terraform import -var="environment=prod" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
-            echo "✓ Import successful"
+          if terraform apply -var="environment=prod" -auto-approve; then
+            echo "✓ Apply succeeded"
           else
-            echo "✓ Bucket does not exist, will create new one"
+            echo "Apply failed. Attempting to import existing bucket..."
+            terraform state rm aws_s3_bucket.app_bucket || true
+            terraform import -var="environment=prod" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            echo "→ Retrying apply after import..."
+            terraform apply -var="environment=prod" -auto-approve
           fi
-        if: ${{ vars.AWS_ROLE_ARN != '' }}
-
-      - name: Terraform Apply (Prod)
-        run: terraform apply -var="environment=prod" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs

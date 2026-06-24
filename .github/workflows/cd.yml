@@ -55,6 +55,15 @@ jobs:
         run: terraform validate
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Set Terraform Exempt Principals (Dev)
+        run: |
+          ROLE_ARN="${{ vars.AWS_ROLE_ARN }}"
+          ACCOUNT_ID=$(echo "$ROLE_ARN" | cut -d: -f5)
+          ROLE_NAME="${ROLE_ARN##*/}"
+          ASSUMED_ROLE_ARN="arn:aws:sts::${ACCOUNT_ID}:assumed-role/${ROLE_NAME}/*"
+          echo "TF_VAR_ip_restriction_exempt_principal_arns=[\"${ROLE_ARN}\",\"${ASSUMED_ROLE_ARN}\"]" >> "$GITHUB_ENV"
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Plan (Dev)
         run: terraform plan -var="environment=dev"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
@@ -64,15 +73,12 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
 
-          if terraform apply -var="environment=dev" -auto-approve; then
-            echo "✓ Apply succeeded"
-          else
-            echo "Apply failed. Attempting to import existing bucket..."
-            terraform state rm aws_s3_bucket.app_bucket || true
-            terraform import -var="environment=dev" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
-            echo "→ Retrying apply after import..."
-            terraform apply -var="environment=dev" -auto-approve
+          if aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
+            echo "Existing bucket detected. Importing into state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
           fi
+
+          terraform apply -var="environment=dev" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs
@@ -121,6 +127,15 @@ jobs:
         run: terraform init
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Set Terraform Exempt Principals (Stg)
+        run: |
+          ROLE_ARN="${{ vars.AWS_ROLE_ARN }}"
+          ACCOUNT_ID=$(echo "$ROLE_ARN" | cut -d: -f5)
+          ROLE_NAME="${ROLE_ARN##*/}"
+          ASSUMED_ROLE_ARN="arn:aws:sts::${ACCOUNT_ID}:assumed-role/${ROLE_NAME}/*"
+          echo "TF_VAR_ip_restriction_exempt_principal_arns=[\"${ROLE_ARN}\",\"${ASSUMED_ROLE_ARN}\"]" >> "$GITHUB_ENV"
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Plan (Stg)
         run: terraform plan -var="environment=stg"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
@@ -130,15 +145,12 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
 
-          if terraform apply -var="environment=stg" -auto-approve; then
-            echo "✓ Apply succeeded"
-          else
-            echo "Apply failed. Attempting to import existing bucket..."
-            terraform state rm aws_s3_bucket.app_bucket || true
-            terraform import -var="environment=stg" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
-            echo "→ Retrying apply after import..."
-            terraform apply -var="environment=stg" -auto-approve
+          if aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
+            echo "Existing bucket detected. Importing into state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
           fi
+
+          terraform apply -var="environment=stg" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs
@@ -187,6 +199,15 @@ jobs:
         run: terraform init
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Set Terraform Exempt Principals (Prod)
+        run: |
+          ROLE_ARN="${{ vars.AWS_ROLE_ARN }}"
+          ACCOUNT_ID=$(echo "$ROLE_ARN" | cut -d: -f5)
+          ROLE_NAME="${ROLE_ARN##*/}"
+          ASSUMED_ROLE_ARN="arn:aws:sts::${ACCOUNT_ID}:assumed-role/${ROLE_NAME}/*"
+          echo "TF_VAR_ip_restriction_exempt_principal_arns=[\"${ROLE_ARN}\",\"${ASSUMED_ROLE_ARN}\"]" >> "$GITHUB_ENV"
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Plan (Prod)
         run: terraform plan -var="environment=prod"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
@@ -196,15 +217,12 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
 
-          if terraform apply -var="environment=prod" -auto-approve; then
-            echo "✓ Apply succeeded"
-          else
-            echo "Apply failed. Attempting to import existing bucket..."
-            terraform state rm aws_s3_bucket.app_bucket || true
-            terraform import -var="environment=prod" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
-            echo "→ Retrying apply after import..."
-            terraform apply -var="environment=prod" -auto-approve
+          if aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
+            echo "Existing bucket detected. Importing into state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
           fi
+
+          terraform apply -var="environment=prod" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs

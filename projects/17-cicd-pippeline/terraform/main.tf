@@ -30,42 +30,43 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
   }
 }
 
-data "aws_iam_policy_document" "app_bucket_ip_restriction" {
-  statement {
-    sid    = "DenyRequestsOutsideAllowedSourceIp"
-    effect = "Deny"
-
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-
-    actions = ["s3:*"]
-
-    resources = [
-      aws_s3_bucket.app_bucket.arn,
-      "${aws_s3_bucket.app_bucket.arn}/*"
-    ]
-
-    condition {
-      test     = "NotIpAddress"
-      variable = "aws:SourceIp"
-      values   = [var.allowed_source_cidr]
-    }
-
-    dynamic "condition" {
-      for_each = length(var.ip_restriction_exempt_principal_arns) > 0 ? [1] : []
-
-      content {
-        test     = "ArnNotLikeIfExists"
-        variable = "aws:PrincipalArn"
-        values   = var.ip_restriction_exempt_principal_arns
-      }
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "app_bucket_policy" {
-  bucket = aws_s3_bucket.app_bucket.id
-  policy = data.aws_iam_policy_document.app_bucket_ip_restriction.json
-}
+# バケットポリシーは作成後に手動で適用するため、一時的にコメントアウト
+# data "aws_iam_policy_document" "app_bucket_ip_restriction" {
+#   statement {
+#     sid    = "DenyRequestsOutsideAllowedSourceIp"
+#     effect = "Deny"
+#
+#     principals {
+#       type        = "*"
+#       identifiers = ["*"]
+#     }
+#
+#     actions = ["s3:*"]
+#
+#     resources = [
+#       aws_s3_bucket.app_bucket.arn,
+#       "${aws_s3_bucket.app_bucket.arn}/*"
+#     ]
+#
+#     condition {
+#       test     = "NotIpAddress"
+#       variable = "aws:SourceIp"
+#       values   = [var.allowed_source_cidr]
+#     }
+#
+#     dynamic "condition" {
+#       for_each = length(var.ip_restriction_exempt_principal_arns) > 0 ? [1] : []
+#
+#       content {
+#         test     = "ArnNotLikeIfExists"
+#         variable = "aws:PrincipalArn"
+#         values   = var.ip_restriction_exempt_principal_arns
+#       }
+#     }
+#   }
+# }
+#
+# resource "aws_s3_bucket_policy" "app_bucket_policy" {
+#   bucket = aws_s3_bucket.app_bucket.id
+#   policy = data.aws_iam_policy_document.app_bucket_ip_restriction.json
+# }

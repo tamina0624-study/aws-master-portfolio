@@ -61,13 +61,14 @@ jobs:
           BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+          if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
             echo "✓ Bucket exists in AWS"
             echo "→ Removing any existing state references..."
             terraform state rm aws_s3_bucket.app_bucket || true
 
             echo "→ Importing bucket to Terraform state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import failed"
+            terraform import -var="environment=dev" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            echo "✓ Import successful"
           else
             echo "✓ Bucket does not exist, will create new one"
           fi
@@ -127,26 +128,27 @@ jobs:
         run: terraform init
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
-      - name: Terraform Plan (Stg)
-        run: terraform plan -var="environment=stg"
-        if: ${{ vars.AWS_ROLE_ARN != '' }}
-
       - name: Import existing S3 bucket (Stg)
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+          if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
             echo "✓ Bucket exists in AWS"
             echo "→ Removing any existing state references..."
             terraform state rm aws_s3_bucket.app_bucket || true
 
             echo "→ Importing bucket to Terraform state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import failed"
+            terraform import -var="environment=stg" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            echo "✓ Import successful"
           else
             echo "✓ Bucket does not exist, will create new one"
           fi
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Terraform Plan (Stg)
+        run: terraform plan -var="environment=stg"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Stg)
@@ -209,13 +211,14 @@ jobs:
           BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+          if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
             echo "✓ Bucket exists in AWS"
             echo "→ Removing any existing state references..."
             terraform state rm aws_s3_bucket.app_bucket || true
 
             echo "→ Importing bucket to Terraform state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import failed"
+            terraform import -var="environment=prod" aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            echo "✓ Import successful"
           else
             echo "✓ Bucket does not exist, will create new one"
           fi

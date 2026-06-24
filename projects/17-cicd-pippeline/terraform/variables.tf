@@ -31,5 +31,7 @@ variable "allowed_source_cidr" {
 variable "ip_restriction_exempt_principal_arns" {
   description = "Principal ARNs exempt from Source IP restriction"
   type        = list(string)
-  default     = []
+  default     = [
+    "arn:aws:iam::638892640336:role/GitHubActionsRole"
+  ]
 }

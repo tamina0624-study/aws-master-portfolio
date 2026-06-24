@@ -83,16 +83,16 @@ jobs:
               cat "${IMPORT_LOG}"
               echo "Import succeeded."
             else
-              if grep -qi "Cannot import non-existent remote object" "${IMPORT_LOG}"; then
-                cat "${IMPORT_LOG}"
-                echo "Bucket does not exist yet. Continue to create by terraform apply."
-              elif grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
+              if grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
                 cat "${IMPORT_LOG}"
                 echo "Already managed resource. Continue."
+              elif aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
+                cat "${IMPORT_LOG}"
+                echo "Bucket exists but import failed."
+                exit 1
               else
                 cat "${IMPORT_LOG}"
-                echo "Import failed with unexpected error."
-                exit 1
+                echo "Bucket not found yet. Continue to create by terraform apply."
               fi
             fi
           fi
@@ -174,16 +174,16 @@ jobs:
               cat "${IMPORT_LOG}"
               echo "Import succeeded."
             else
-              if grep -qi "Cannot import non-existent remote object" "${IMPORT_LOG}"; then
-                cat "${IMPORT_LOG}"
-                echo "Bucket does not exist yet. Continue to create by terraform apply."
-              elif grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
+              if grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
                 cat "${IMPORT_LOG}"
                 echo "Already managed resource. Continue."
+              elif aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
+                cat "${IMPORT_LOG}"
+                echo "Bucket exists but import failed."
+                exit 1
               else
                 cat "${IMPORT_LOG}"
-                echo "Import failed with unexpected error."
-                exit 1
+                echo "Bucket not found yet. Continue to create by terraform apply."
               fi
             fi
           fi
@@ -265,16 +265,16 @@ jobs:
               cat "${IMPORT_LOG}"
               echo "Import succeeded."
             else
-              if grep -qi "Cannot import non-existent remote object" "${IMPORT_LOG}"; then
-                cat "${IMPORT_LOG}"
-                echo "Bucket does not exist yet. Continue to create by terraform apply."
-              elif grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
+              if grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
                 cat "${IMPORT_LOG}"
                 echo "Already managed resource. Continue."
+              elif aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
+                cat "${IMPORT_LOG}"
+                echo "Bucket exists but import failed."
+                exit 1
               else
                 cat "${IMPORT_LOG}"
-                echo "Import failed with unexpected error."
-                exit 1
+                echo "Bucket not found yet. Continue to create by terraform apply."
               fi
             fi
           fi

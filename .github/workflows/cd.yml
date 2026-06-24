@@ -70,12 +70,19 @@ jobs:
 
       - name: Terraform Apply (Dev)
         run: |
+          set -euo pipefail
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
 
-          if aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
-            echo "Existing bucket detected. Importing into state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
+          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
+          if [ "${BUCKET_EXISTS}" = "1" ]; then
+            echo "Existing bucket detected: ${BUCKET_NAME}"
+            if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
+              echo "Bucket already managed in Terraform state. Skipping import."
+            else
+              echo "Importing existing bucket into Terraform state..."
+              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            fi
           fi
 
           terraform apply -var="environment=dev" -auto-approve
@@ -142,12 +149,19 @@ jobs:
 
       - name: Terraform Apply (Stg)
         run: |
+          set -euo pipefail
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
 
-          if aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
-            echo "Existing bucket detected. Importing into state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
+          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
+          if [ "${BUCKET_EXISTS}" = "1" ]; then
+            echo "Existing bucket detected: ${BUCKET_NAME}"
+            if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
+              echo "Bucket already managed in Terraform state. Skipping import."
+            else
+              echo "Importing existing bucket into Terraform state..."
+              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            fi
           fi
 
           terraform apply -var="environment=stg" -auto-approve
@@ -214,12 +228,19 @@ jobs:
 
       - name: Terraform Apply (Prod)
         run: |
+          set -euo pipefail
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
 
-          if aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
-            echo "Existing bucket detected. Importing into state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
+          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
+          if [ "${BUCKET_EXISTS}" = "1" ]; then
+            echo "Existing bucket detected: ${BUCKET_NAME}"
+            if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
+              echo "Bucket already managed in Terraform state. Skipping import."
+            else
+              echo "Importing existing bucket into Terraform state..."
+              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+            fi
           fi
 
           terraform apply -var="environment=prod" -auto-approve

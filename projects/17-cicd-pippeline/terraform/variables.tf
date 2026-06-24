@@ -25,7 +25,7 @@ variable "app_name" {
 variable "allowed_source_cidr" {
   description = "CIDR allowed to access S3 bucket"
   type        = string
-  default     = "211.125.140.0/24"
+  default     = "164.70.177.0/24"
 }
 
 variable "ip_restriction_exempt_principal_arns" {

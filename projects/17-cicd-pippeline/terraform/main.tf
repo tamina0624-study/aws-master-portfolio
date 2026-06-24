@@ -52,15 +52,6 @@ data "aws_iam_policy_document" "app_bucket_ip_restriction" {
       variable = "aws:SourceIp"
       values   = [var.allowed_source_cidr]
     }
-
-    condition {
-      test     = "ArnNotLikeIfExists"
-      variable = "aws:PrincipalArn"
-      values = concat(
-        var.ip_restriction_exempt_principal_arns,
-        [data.aws_caller_identity.current.arn]
-      )
-    }
   }
 }
 

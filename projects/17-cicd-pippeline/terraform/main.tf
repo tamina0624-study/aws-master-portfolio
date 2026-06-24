@@ -36,6 +36,16 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
   }
 }
 
+resource "aws_s3_bucket_tagging" "app_bucket_tags" {
+  bucket = local.bucket_name
+
+  tag_set = {
+    Name        = "${var.app_name}-bucket"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
 # バケットポリシーは作成後に手動で適用するため、一時的にコメントアウト
 # data "aws_iam_policy_document" "app_bucket_ip_restriction" {
 #   statement {

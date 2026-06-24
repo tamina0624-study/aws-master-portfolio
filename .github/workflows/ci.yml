@@ -96,11 +96,13 @@ jobs:
       - name: Python dependency audit
         run: python -m pip_audit -r requirements.txt
 
-      - name: Secret scan (skipped)
-        run: "true"
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Terraform scan (checkov)
-        run: python -m checkov.main -d terraform --framework terraform --quiet || true
+        run: python -m checkov.main -d terraform --framework terraform --quiet
 
   # Terraform の静的検証と（任意）plan 実行
   terraform-check:

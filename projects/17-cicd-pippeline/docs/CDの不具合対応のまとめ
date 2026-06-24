@@ -1,0 +1,141 @@
+﻿CD不具合対応まとめ（2026-06-24〜2026-06-25）
+
+1. 事象サマリー
+- CDが実行されない、または途中で失敗する状態が断続的に発生。
+- 主な失敗箇所は GitHub Actions の設定、Terraform 初期化、S3バケット作成、ヘルスチェック。
+- 最終的に dev/stg/prod の段階デプロイが通る構成へ修正。
+
+2. 問題点と対策
+
+2-1. CDが起動しない／ステップがスキップされる
+- 症状:
+  - workflowは走るが deploy 系ステップが実行されない。
+- 原因:
+  - cd.yml が if: vars.AWS_ROLE_ARN != '' を条件にしており、Repository Variables 未設定時は全スキップ。
+- 対策:
+  - Repository Variables に AWS_ROLE_ARN を設定。
+  - environment（dev/stg/prod）設定も整備。
+- 再発防止:
+  - 新規リポジトリ初期設定チェックリストに Variables/Environment 作成を追加。
+
+2-2. OIDC認証失敗（AssumeRoleWithWebIdentity）
+- 症状:
+  - PR時または特定イベント時のみ OIDC 認証失敗。
+- 原因:
+  - IAMロール信頼ポリシーの sub 条件が厳しすぎ、イベント種別に一致しない。
+- 対策:
+  - trust policy の sub を StringLike + repo スコープの許容条件に調整。
+- 再発防止:
+  - push/PR/workflow_dispatch の3系統で事前疎通テスト。
+
+2-3. cd.yml のYAML構文エラー
+- 症状:
+  - Invalid workflow file（yaml syntax error）。
+- 原因:
+  - BOM付きUTF-8やインデント崩れ。
+- 対策:
+  - BOMなしUTF-8で保存、インデントを全面修正。
+- 再発防止:
+  - push前にローカルでYAML lint相当チェックを実施。
+
+2-4. ruff エラー（I001: import並び順）
+- 症状:
+  - scripts/health_check.py で CI が失敗。
+- 原因:
+  - 標準ライブラリとサードパーティ import の区切りが規約不一致。
+- 対策:
+  - import順を修正（stdlib と third-party の間に空行）。
+- 再発防止:
+  - ローカルで ruff check / ruff format --check を必須化。
+
+2-5. mypy エラー（boto3 型情報）
+- 症状:
+  - boto3/botocore の import-untyped で失敗。
+- 原因:
+  - deploy用スクリプトまで厳格型チェック対象。
+- 対策:
+  - pyproject.toml で mypy の対象調整（scripts の扱いを明確化）。
+- 再発防止:
+  - CIで「アプリ本体」と「運用スクリプト」の品質ゲートを分離。
+
+2-6. Terraform 初期化失敗（Duplicate data resource）
+- 症状:
+  - terraform init で Duplicate data aws_caller_identity.current。
+- 原因:
+  - main.tf 内で同一 data ブロックが重複定義。
+- 対策:
+  - 重複定義を削除、未使用 data source も整理。
+- 再発防止:
+  - PR時に terraform validate を必須化。
+
+2-7. S3作成失敗（BucketAlreadyOwnedByYou: 409）
+- 症状:
+  - terraform apply で既存バケット再作成を試み失敗。
+- 原因:
+  - state と実リソース不整合、既存バケット取り込みロジック不十分。
+- 対策:
+  - apply失敗時に state調整 + import + 再apply のリトライパターンを導入。
+  - import 時に -var="environment=..." を明示して provider 変数不整合を解消。
+- 再発防止:
+  - 既存リソースがある環境は import/再実行戦略をワークフローに組み込み。
+
+2-8. ヘルスチェック失敗（403）
+- 症状:
+  - health_check.py の S3確認で AccessDenied。
+- 原因:
+  - Actions 実行ロールの S3 権限不足。
+- 対策:
+  - 必要 API（List/Get/Tagging など）をロールポリシーに追加。
+- 再発防止:
+  - ヘルスチェック実装前に必要API一覧を権限設計へ反映。
+
+2-9. aws_s3_bucket_tagging 非対応エラー
+- 症状:
+  - terraform validate で Invalid resource type。
+- 原因:
+  - 利用中 provider / リソース構成との不整合。
+- 対策:
+  - Terraform 側の該当リソースを外し、必要タグ処理をCLI側へ退避。
+- 再発防止:
+  - providerバージョンと利用リソースの対応表を事前確認。
+
+2-10. ローカル再現とGitHub Actions挙動の差
+- 症状:
+  - ローカルではS3関連が再現しづらい/失敗理由が異なる。
+- 原因:
+  - ローカル環境のDNS/ネットワーク制約とActions環境差。
+- 対策:
+  - ローカルは validate/plan 中心、本番同等確認は Actions ログを正として検証。
+- 再発防止:
+  - 「ローカル確認範囲」と「CI上確認範囲」を分けた運用に統一。
+
+2-11. IP制限の導入（要望対応）
+- 実施内容:
+  - S3バケットポリシーに Source IP 制限を導入。
+  - 許可CIDR: 211.125.140.0/24。
+  - 例外ARNを変数化し、CD実行主体を除外可能にした。
+- 追加変数:
+  - allowed_source_cidr（default: 211.125.140.0/24）
+  - ip_restriction_exempt_principal_arns（default: []）
+- 検証:
+  - terraform fmt / init -backend=false / validate / plan で反映確認。
+
+3. 最終的に確立した運用ルール
+- push前に必ずローカル実行:
+  - ruff check .
+  - ruff format --check .
+  - mypy .
+  - pytest
+  - terraform fmt -check
+  - terraform validate
+- CDでは以下を保証:
+  - dev → stg → prod の順次実行（needsで依存）
+  - 失敗時の import + 再apply リカバリ
+  - デプロイ後ヘルスチェック
+- 設定管理:
+  - Variables / Environments / IAM trust policy の3点を初期構築時に必須化。
+
+4. 今後の改善候補
+- CDワークフローの共通処理（terraform apply + retry）を composite action 化。
+- IAM権限を Access Analyzer で定期監査。
+- runbook（障害→原因→対処→再発防止）をテンプレート化。

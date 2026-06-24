@@ -7,6 +7,13 @@ locals {
 
 # バケットが存在しない場合のみ作成
 resource "aws_s3_bucket" "app_bucket" {
+  #checkov:skip=CKV_AWS_145:KMS encryption is out of scope for this learning stack
+  #checkov:skip=CKV_AWS_18:Access logging destination bucket is not provisioned in this stack
+  #checkov:skip=CKV_AWS_144:Cross-region replication is out of scope for this learning stack
+  #checkov:skip=CKV2_AWS_62:Event notification target is not configured in this stack
+  #checkov:skip=CKV2_AWS_61:Lifecycle configuration is intentionally omitted for demo data retention
+  #checkov:skip=CKV_AWS_21:Versioning is configured via separate aws_s3_bucket_versioning resource
+  #checkov:skip=CKV2_AWS_6:Public access block is configured via separate aws_s3_bucket_public_access_block resource
   count  = var.create_bucket ? 1 : 0
   bucket = local.bucket_name
 

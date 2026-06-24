@@ -1,11 +1,5 @@
 data "aws_caller_identity" "current" {}
 
-# 既存のバケットを参照（存在しない場合は無視）
-data "aws_s3_bucket" "existing_bucket" {
-  bucket = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
-  count  = 0 # Initially, we don't look for existing bucket
-}
-
 # バケットが存在しない場合のみ作成
 resource "aws_s3_bucket" "app_bucket" {
   bucket = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
@@ -35,5 +29,3 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
     status = "Enabled"
   }
 }
-
-data "aws_caller_identity" "current" {}

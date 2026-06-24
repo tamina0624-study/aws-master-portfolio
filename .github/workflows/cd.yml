@@ -55,22 +55,29 @@ jobs:
         run: terraform validate
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
-      - name: Terraform Plan (Dev)
-        run: terraform plan -var="environment=dev"
-        if: ${{ vars.AWS_ROLE_ARN != '' }}
-
       - name: Import existing S3 bucket (Dev)
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
-            echo "✓ Bucket does not exist, will create new one"
+          if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "✓ Bucket exists"
+
+            # Check if already in state
+            if terraform state list | grep -q "aws_s3_bucket.app_bucket"; then
+              echo "✓ Bucket already in Terraform state"
+            else
+              echo "→ Importing bucket to Terraform state..."
+              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
+            fi
           else
-            echo "✓ Bucket exists, importing to Terraform state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import skipped (already in state or error)"
+            echo "✓ Bucket does not exist, will create new one"
           fi
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Terraform Plan (Dev)
+        run: terraform plan -var="environment=dev"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Dev)
@@ -133,11 +140,18 @@ jobs:
           BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
-            echo "✓ Bucket does not exist, will create new one"
+          if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "✓ Bucket exists"
+
+            # Check if already in state
+            if terraform state list | grep -q "aws_s3_bucket.app_bucket"; then
+              echo "✓ Bucket already in Terraform state"
+            else
+              echo "→ Importing bucket to Terraform state..."
+              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
+            fi
           else
-            echo "✓ Bucket exists, importing to Terraform state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import skipped (already in state or error)"
+            echo "✓ Bucket does not exist, will create new one"
           fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
@@ -201,11 +215,18 @@ jobs:
           BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
-          if aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
-            echo "✓ Bucket does not exist, will create new one"
+          if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "✓ Bucket exists"
+
+            # Check if already in state
+            if terraform state list | grep -q "aws_s3_bucket.app_bucket"; then
+              echo "✓ Bucket already in Terraform state"
+            else
+              echo "→ Importing bucket to Terraform state..."
+              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
+            fi
           else
-            echo "✓ Bucket exists, importing to Terraform state..."
-            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import skipped (already in state or error)"
+            echo "✓ Bucket does not exist, will create new one"
           fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 

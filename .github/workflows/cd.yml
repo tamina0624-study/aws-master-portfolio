@@ -62,15 +62,12 @@ jobs:
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
           if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
-            echo "✓ Bucket exists"
+            echo "✓ Bucket exists in AWS"
+            echo "→ Removing any existing state references..."
+            terraform state rm aws_s3_bucket.app_bucket || true
 
-            # Check if already in state
-            if terraform state list | grep -q "aws_s3_bucket.app_bucket"; then
-              echo "✓ Bucket already in Terraform state"
-            else
-              echo "→ Importing bucket to Terraform state..."
-              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
-            fi
+            echo "→ Importing bucket to Terraform state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import failed"
           else
             echo "✓ Bucket does not exist, will create new one"
           fi
@@ -141,15 +138,12 @@ jobs:
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
           if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
-            echo "✓ Bucket exists"
+            echo "✓ Bucket exists in AWS"
+            echo "→ Removing any existing state references..."
+            terraform state rm aws_s3_bucket.app_bucket || true
 
-            # Check if already in state
-            if terraform state list | grep -q "aws_s3_bucket.app_bucket"; then
-              echo "✓ Bucket already in Terraform state"
-            else
-              echo "→ Importing bucket to Terraform state..."
-              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
-            fi
+            echo "→ Importing bucket to Terraform state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import failed"
           else
             echo "✓ Bucket does not exist, will create new one"
           fi
@@ -216,15 +210,12 @@ jobs:
 
           echo "Checking if bucket ${BUCKET_NAME} exists..."
           if ! aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
-            echo "✓ Bucket exists"
+            echo "✓ Bucket exists in AWS"
+            echo "→ Removing any existing state references..."
+            terraform state rm aws_s3_bucket.app_bucket || true
 
-            # Check if already in state
-            if terraform state list | grep -q "aws_s3_bucket.app_bucket"; then
-              echo "✓ Bucket already in Terraform state"
-            else
-              echo "→ Importing bucket to Terraform state..."
-              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || true
-            fi
+            echo "→ Importing bucket to Terraform state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import failed"
           else
             echo "✓ Bucket does not exist, will create new one"
           fi

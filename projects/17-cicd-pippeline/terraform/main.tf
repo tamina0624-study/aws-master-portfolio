@@ -1,8 +1,14 @@
 data "aws_caller_identity" "current" {}
 
+locals {
+  bucket_name = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  bucket_arn  = "arn:aws:s3:::${local.bucket_name}"
+}
+
 # バケットが存在しない場合のみ作成
 resource "aws_s3_bucket" "app_bucket" {
-  bucket = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  count  = var.create_bucket ? 1 : 0
+  bucket = local.bucket_name
 
   tags = {
     Name = "${var.app_name}-bucket"
@@ -14,7 +20,7 @@ resource "aws_s3_bucket" "app_bucket" {
 }
 
 resource "aws_s3_bucket_public_access_block" "app_bucket_pab" {
-  bucket = aws_s3_bucket.app_bucket.id
+  bucket = local.bucket_name
 
   block_public_acls       = true
   block_public_policy     = true
@@ -23,7 +29,7 @@ resource "aws_s3_bucket_public_access_block" "app_bucket_pab" {
 }
 
 resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
-  bucket = aws_s3_bucket.app_bucket.id
+  bucket = local.bucket_name
 
   versioning_configuration {
     status = "Enabled"
@@ -44,8 +50,8 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
 #     actions = ["s3:*"]
 #
 #     resources = [
-#       aws_s3_bucket.app_bucket.arn,
-#       "${aws_s3_bucket.app_bucket.arn}/*"
+#       local.bucket_arn,
+#       "${local.bucket_arn}/*"
 #     ]
 #
 #     condition {
@@ -67,6 +73,6 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
 # }
 #
 # resource "aws_s3_bucket_policy" "app_bucket_policy" {
-#   bucket = aws_s3_bucket.app_bucket.id
+#   bucket = local.bucket_name
 #   policy = data.aws_iam_policy_document.app_bucket_ip_restriction.json
 # }

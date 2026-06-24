@@ -74,27 +74,13 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
 
-          if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
-            echo "Bucket already managed in Terraform state."
+          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
+          if [ "${BUCKET_EXISTS}" = "1" ]; then
+            echo "Bucket already exists. Skip bucket creation in Terraform."
+            echo "TF_VAR_create_bucket=false" >> "$GITHUB_ENV"
           else
-            echo "Trying to import existing bucket: ${BUCKET_NAME}"
-            IMPORT_LOG=$(mktemp)
-            if terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" >"${IMPORT_LOG}" 2>&1; then
-              cat "${IMPORT_LOG}"
-              echo "Import succeeded."
-            else
-              if grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
-                cat "${IMPORT_LOG}"
-                echo "Already managed resource. Continue."
-              elif aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
-                cat "${IMPORT_LOG}"
-                echo "Bucket exists but import failed."
-                exit 1
-              else
-                cat "${IMPORT_LOG}"
-                echo "Bucket not found yet. Continue to create by terraform apply."
-              fi
-            fi
+            echo "Bucket does not exist. Terraform will create it."
+            echo "TF_VAR_create_bucket=true" >> "$GITHUB_ENV"
           fi
 
           terraform apply -var="environment=dev" -auto-approve
@@ -165,27 +151,13 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
 
-          if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
-            echo "Bucket already managed in Terraform state."
+          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
+          if [ "${BUCKET_EXISTS}" = "1" ]; then
+            echo "Bucket already exists. Skip bucket creation in Terraform."
+            echo "TF_VAR_create_bucket=false" >> "$GITHUB_ENV"
           else
-            echo "Trying to import existing bucket: ${BUCKET_NAME}"
-            IMPORT_LOG=$(mktemp)
-            if terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" >"${IMPORT_LOG}" 2>&1; then
-              cat "${IMPORT_LOG}"
-              echo "Import succeeded."
-            else
-              if grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
-                cat "${IMPORT_LOG}"
-                echo "Already managed resource. Continue."
-              elif aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
-                cat "${IMPORT_LOG}"
-                echo "Bucket exists but import failed."
-                exit 1
-              else
-                cat "${IMPORT_LOG}"
-                echo "Bucket not found yet. Continue to create by terraform apply."
-              fi
-            fi
+            echo "Bucket does not exist. Terraform will create it."
+            echo "TF_VAR_create_bucket=true" >> "$GITHUB_ENV"
           fi
 
           terraform apply -var="environment=stg" -auto-approve
@@ -256,27 +228,13 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
 
-          if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
-            echo "Bucket already managed in Terraform state."
+          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
+          if [ "${BUCKET_EXISTS}" = "1" ]; then
+            echo "Bucket already exists. Skip bucket creation in Terraform."
+            echo "TF_VAR_create_bucket=false" >> "$GITHUB_ENV"
           else
-            echo "Trying to import existing bucket: ${BUCKET_NAME}"
-            IMPORT_LOG=$(mktemp)
-            if terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" >"${IMPORT_LOG}" 2>&1; then
-              cat "${IMPORT_LOG}"
-              echo "Import succeeded."
-            else
-              if grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
-                cat "${IMPORT_LOG}"
-                echo "Already managed resource. Continue."
-              elif aws s3api head-bucket --bucket "${BUCKET_NAME}" >/dev/null 2>&1; then
-                cat "${IMPORT_LOG}"
-                echo "Bucket exists but import failed."
-                exit 1
-              else
-                cat "${IMPORT_LOG}"
-                echo "Bucket not found yet. Continue to create by terraform apply."
-              fi
-            fi
+            echo "Bucket does not exist. Terraform will create it."
+            echo "TF_VAR_create_bucket=true" >> "$GITHUB_ENV"
           fi
 
           terraform apply -var="environment=prod" -auto-approve

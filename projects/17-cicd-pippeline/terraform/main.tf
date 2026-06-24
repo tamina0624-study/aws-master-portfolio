@@ -29,3 +29,42 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
     status = "Enabled"
   }
 }
+
+data "aws_iam_policy_document" "app_bucket_ip_restriction" {
+  statement {
+    sid    = "DenyRequestsOutsideAllowedSourceIp"
+    effect = "Deny"
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    actions = ["s3:*"]
+
+    resources = [
+      aws_s3_bucket.app_bucket.arn,
+      "${aws_s3_bucket.app_bucket.arn}/*"
+    ]
+
+    condition {
+      test     = "NotIpAddress"
+      variable = "aws:SourceIp"
+      values   = [var.allowed_source_cidr]
+    }
+
+    condition {
+      test     = "ArnNotLikeIfExists"
+      variable = "aws:PrincipalArn"
+      values = concat(
+        var.ip_restriction_exempt_principal_arns,
+        [data.aws_caller_identity.current.arn]
+      )
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "app_bucket_policy" {
+  bucket = aws_s3_bucket.app_bucket.id
+  policy = data.aws_iam_policy_document.app_bucket_ip_restriction.json
+}

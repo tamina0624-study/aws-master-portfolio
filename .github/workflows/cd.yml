@@ -28,6 +28,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+        working-directory: projects/17-cicd-pippeline
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -54,11 +63,19 @@ jobs:
         run: terraform apply -var="environment=dev" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Get Terraform Outputs
+        id: tf-outputs
+        run: |
+          S3_BUCKET=$(terraform output -raw s3_bucket_name)
+          echo "s3_bucket_name=$S3_BUCKET" >> $GITHUB_OUTPUT
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Health Check
         run: |
           python scripts/health_check.py
+        working-directory: projects/17-cicd-pippeline
         env:
-          S3_BUCKET_NAME: cicd-learning-sample-app-dev-638892640336
+          S3_BUCKET_NAME: ${{ steps.tf-outputs.outputs.s3_bucket_name }}
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
   # stg 環境デプロイ
@@ -68,6 +85,15 @@ jobs:
     needs: deploy-dev
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+        working-directory: projects/17-cicd-pippeline
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -91,6 +117,21 @@ jobs:
         run: terraform apply -var="environment=stg" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Get Terraform Outputs
+        id: tf-outputs
+        run: |
+          S3_BUCKET=$(terraform output -raw s3_bucket_name)
+          echo "s3_bucket_name=$S3_BUCKET" >> $GITHUB_OUTPUT
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Health Check
+        run: |
+          python scripts/health_check.py
+        working-directory: projects/17-cicd-pippeline
+        env:
+          S3_BUCKET_NAME: ${{ steps.tf-outputs.outputs.s3_bucket_name }}
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
   # prod 環境デプロイ
   deploy-prod:
     environment: prod
@@ -98,6 +139,15 @@ jobs:
     needs: deploy-stg
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+        working-directory: projects/17-cicd-pippeline
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -119,4 +169,19 @@ jobs:
 
       - name: Terraform Apply (Prod)
         run: terraform apply -var="environment=prod" -auto-approve
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Get Terraform Outputs
+        id: tf-outputs
+        run: |
+          S3_BUCKET=$(terraform output -raw s3_bucket_name)
+          echo "s3_bucket_name=$S3_BUCKET" >> $GITHUB_OUTPUT
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Health Check
+        run: |
+          python scripts/health_check.py
+        working-directory: projects/17-cicd-pippeline
+        env:
+          S3_BUCKET_NAME: ${{ steps.tf-outputs.outputs.s3_bucket_name }}
         if: ${{ vars.AWS_ROLE_ARN != '' }}

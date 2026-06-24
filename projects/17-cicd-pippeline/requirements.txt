@@ -1,2 +1,5 @@
 # Runtime dependencies for application code.
 # Keep security audit focused on deploy/runtime packages.
+
+boto3
+botocore

@@ -77,13 +77,13 @@ jobs:
           BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
           if [ "${BUCKET_EXISTS}" = "1" ]; then
             echo "Bucket already exists. Skip bucket creation in Terraform."
-            echo "TF_VAR_create_bucket=false" >> "$GITHUB_ENV"
+            CREATE_BUCKET=false
           else
             echo "Bucket does not exist. Terraform will create it."
-            echo "TF_VAR_create_bucket=true" >> "$GITHUB_ENV"
+            CREATE_BUCKET=true
           fi
 
-          terraform apply -var="environment=dev" -auto-approve
+          terraform apply -var="environment=dev" -var="create_bucket=${CREATE_BUCKET}" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs
@@ -154,13 +154,13 @@ jobs:
           BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
           if [ "${BUCKET_EXISTS}" = "1" ]; then
             echo "Bucket already exists. Skip bucket creation in Terraform."
-            echo "TF_VAR_create_bucket=false" >> "$GITHUB_ENV"
+            CREATE_BUCKET=false
           else
             echo "Bucket does not exist. Terraform will create it."
-            echo "TF_VAR_create_bucket=true" >> "$GITHUB_ENV"
+            CREATE_BUCKET=true
           fi
 
-          terraform apply -var="environment=stg" -auto-approve
+          terraform apply -var="environment=stg" -var="create_bucket=${CREATE_BUCKET}" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs
@@ -231,13 +231,13 @@ jobs:
           BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
           if [ "${BUCKET_EXISTS}" = "1" ]; then
             echo "Bucket already exists. Skip bucket creation in Terraform."
-            echo "TF_VAR_create_bucket=false" >> "$GITHUB_ENV"
+            CREATE_BUCKET=false
           else
             echo "Bucket does not exist. Terraform will create it."
-            echo "TF_VAR_create_bucket=true" >> "$GITHUB_ENV"
+            CREATE_BUCKET=true
           fi
 
-          terraform apply -var="environment=prod" -auto-approve
+          terraform apply -var="environment=prod" -var="create_bucket=${CREATE_BUCKET}" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs

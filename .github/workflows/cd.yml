@@ -93,6 +93,13 @@ jobs:
           echo "s3_bucket_name=$S3_BUCKET" >> $GITHUB_OUTPUT
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Ensure Bucket Tags (Dev)
+        run: |
+          aws s3api put-bucket-tagging \
+            --bucket "${{ steps.tf-outputs.outputs.s3_bucket_name }}" \
+            --tagging 'TagSet=[{Key=Name,Value=sample-app-bucket},{Key=Environment,Value=dev},{Key=Project,Value=cicd-learning}]'
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Health Check
         run: |
           python scripts/health_check.py
@@ -170,6 +177,13 @@ jobs:
           echo "s3_bucket_name=$S3_BUCKET" >> $GITHUB_OUTPUT
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Ensure Bucket Tags (Stg)
+        run: |
+          aws s3api put-bucket-tagging \
+            --bucket "${{ steps.tf-outputs.outputs.s3_bucket_name }}" \
+            --tagging 'TagSet=[{Key=Name,Value=sample-app-bucket},{Key=Environment,Value=stg},{Key=Project,Value=cicd-learning}]'
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Health Check
         run: |
           python scripts/health_check.py
@@ -245,6 +259,13 @@ jobs:
         run: |
           S3_BUCKET=$(terraform output -raw s3_bucket_name)
           echo "s3_bucket_name=$S3_BUCKET" >> $GITHUB_OUTPUT
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Ensure Bucket Tags (Prod)
+        run: |
+          aws s3api put-bucket-tagging \
+            --bucket "${{ steps.tf-outputs.outputs.s3_bucket_name }}" \
+            --tagging 'TagSet=[{Key=Name,Value=sample-app-bucket},{Key=Environment,Value=prod},{Key=Project,Value=cicd-learning}]'
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Health Check

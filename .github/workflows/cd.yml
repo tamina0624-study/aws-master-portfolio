@@ -59,6 +59,20 @@ jobs:
         run: terraform plan -var="environment=dev"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Import existing S3 bucket (Dev)
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
+
+          echo "Checking if bucket ${BUCKET_NAME} exists..."
+          if aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "✓ Bucket does not exist, will create new one"
+          else
+            echo "✓ Bucket exists, importing to Terraform state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import skipped (already in state or error)"
+          fi
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Apply (Dev)
         run: terraform apply -var="environment=dev" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
@@ -113,6 +127,20 @@ jobs:
         run: terraform plan -var="environment=stg"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Import existing S3 bucket (Stg)
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
+
+          echo "Checking if bucket ${BUCKET_NAME} exists..."
+          if aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "✓ Bucket does not exist, will create new one"
+          else
+            echo "✓ Bucket exists, importing to Terraform state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import skipped (already in state or error)"
+          fi
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Apply (Stg)
         run: terraform apply -var="environment=stg" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
@@ -165,6 +193,20 @@ jobs:
 
       - name: Terraform Plan (Prod)
         run: terraform plan -var="environment=prod"
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Import existing S3 bucket (Prod)
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
+
+          echo "Checking if bucket ${BUCKET_NAME} exists..."
+          if aws s3 ls "s3://${BUCKET_NAME}" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "✓ Bucket does not exist, will create new one"
+          else
+            echo "✓ Bucket exists, importing to Terraform state..."
+            terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" || echo "⚠ Import skipped (already in state or error)"
+          fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Prod)

@@ -74,14 +74,26 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
 
-          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
-          if [ "${BUCKET_EXISTS}" = "1" ]; then
-            echo "Existing bucket detected: ${BUCKET_NAME}"
-            if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
-              echo "Bucket already managed in Terraform state. Skipping import."
+          if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
+            echo "Bucket already managed in Terraform state."
+          else
+            echo "Trying to import existing bucket: ${BUCKET_NAME}"
+            IMPORT_LOG=$(mktemp)
+            if terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" >"${IMPORT_LOG}" 2>&1; then
+              cat "${IMPORT_LOG}"
+              echo "Import succeeded."
             else
-              echo "Importing existing bucket into Terraform state..."
-              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+              if grep -qi "Cannot import non-existent remote object" "${IMPORT_LOG}"; then
+                cat "${IMPORT_LOG}"
+                echo "Bucket does not exist yet. Continue to create by terraform apply."
+              elif grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
+                cat "${IMPORT_LOG}"
+                echo "Already managed resource. Continue."
+              else
+                cat "${IMPORT_LOG}"
+                echo "Import failed with unexpected error."
+                exit 1
+              fi
             fi
           fi
 
@@ -153,14 +165,26 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-stg-${ACCOUNT_ID}"
 
-          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
-          if [ "${BUCKET_EXISTS}" = "1" ]; then
-            echo "Existing bucket detected: ${BUCKET_NAME}"
-            if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
-              echo "Bucket already managed in Terraform state. Skipping import."
+          if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
+            echo "Bucket already managed in Terraform state."
+          else
+            echo "Trying to import existing bucket: ${BUCKET_NAME}"
+            IMPORT_LOG=$(mktemp)
+            if terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" >"${IMPORT_LOG}" 2>&1; then
+              cat "${IMPORT_LOG}"
+              echo "Import succeeded."
             else
-              echo "Importing existing bucket into Terraform state..."
-              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+              if grep -qi "Cannot import non-existent remote object" "${IMPORT_LOG}"; then
+                cat "${IMPORT_LOG}"
+                echo "Bucket does not exist yet. Continue to create by terraform apply."
+              elif grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
+                cat "${IMPORT_LOG}"
+                echo "Already managed resource. Continue."
+              else
+                cat "${IMPORT_LOG}"
+                echo "Import failed with unexpected error."
+                exit 1
+              fi
             fi
           fi
 
@@ -232,14 +256,26 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           BUCKET_NAME="cicd-learning-sample-app-prod-${ACCOUNT_ID}"
 
-          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
-          if [ "${BUCKET_EXISTS}" = "1" ]; then
-            echo "Existing bucket detected: ${BUCKET_NAME}"
-            if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
-              echo "Bucket already managed in Terraform state. Skipping import."
+          if terraform state list | grep -q '^aws_s3_bucket\.app_bucket$'; then
+            echo "Bucket already managed in Terraform state."
+          else
+            echo "Trying to import existing bucket: ${BUCKET_NAME}"
+            IMPORT_LOG=$(mktemp)
+            if terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}" >"${IMPORT_LOG}" 2>&1; then
+              cat "${IMPORT_LOG}"
+              echo "Import succeeded."
             else
-              echo "Importing existing bucket into Terraform state..."
-              terraform import aws_s3_bucket.app_bucket "${BUCKET_NAME}"
+              if grep -qi "Cannot import non-existent remote object" "${IMPORT_LOG}"; then
+                cat "${IMPORT_LOG}"
+                echo "Bucket does not exist yet. Continue to create by terraform apply."
+              elif grep -qi "Resource already managed by Terraform" "${IMPORT_LOG}"; then
+                cat "${IMPORT_LOG}"
+                echo "Already managed resource. Continue."
+              else
+                cat "${IMPORT_LOG}"
+                echo "Import failed with unexpected error."
+                exit 1
+              fi
             fi
           fi
 

@@ -74,7 +74,7 @@ resource "aws_instance" "destroy_test" {
   instance_type               = var.ec2_test_instance_type
   subnet_id                   = aws_subnet.ec2_test[0].id
   vpc_security_group_ids      = [aws_security_group.ec2_test[0].id]
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   user_data                   = <<-EOF
     #!/bin/bash
     set -euxo pipefail

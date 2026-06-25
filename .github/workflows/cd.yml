@@ -71,10 +71,41 @@ jobs:
           set -euo pipefail
           export TF_VAR_create_ec2_test=true
 
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          S3_BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
           VPC_TAG_NAME="sample-app-ec2-test-vpc"
           SUBNET_TAG_NAME="sample-app-ec2-test-subnet"
           INSTANCE_TAG_NAME="sample-app-destroy-test"
           SG_NAME="cicd-learning-sample-app-dev-ec2-test-sg"
+
+          if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
+            echo "S3 bucket already exists in state."
+          else
+            BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${S3_BUCKET_NAME}'])" --output text)
+            if [ "${BUCKET_EXISTS}" = "1" ]; then
+              terraform import 'aws_s3_bucket.app_bucket[0]' "${S3_BUCKET_NAME}"
+            else
+              echo "No existing S3 bucket found to import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket_public_access_block.app_bucket_pab\[0\]$'; then
+            echo "S3 public access block already exists in state."
+          elif terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
+            terraform import 'aws_s3_bucket_public_access_block.app_bucket_pab[0]' "${S3_BUCKET_NAME}" || true
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket_versioning.app_bucket_versioning\[0\]$'; then
+            echo "S3 versioning already exists in state."
+          elif terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
+            terraform import 'aws_s3_bucket_versioning.app_bucket_versioning[0]' "${S3_BUCKET_NAME}" || true
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket_policy.app_bucket_policy\[0\]$'; then
+            echo "S3 bucket policy already exists in state."
+          elif terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
+            terraform import 'aws_s3_bucket_policy.app_bucket_policy[0]' "${S3_BUCKET_NAME}" || true
+          fi
 
           if terraform state list 2>/dev/null | grep -q '^aws_vpc.ec2_test\[0\]$'; then
             echo "VPC already exists in state."

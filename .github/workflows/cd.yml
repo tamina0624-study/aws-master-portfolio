@@ -69,15 +69,24 @@ jobs:
       - name: Terraform Plan (Dev)
         run: |
           set +e
-          terraform plan -no-color -input=false -detailed-exitcode -var="environment=dev"
+          terraform plan -no-color -input=false -detailed-exitcode -out=tfplan-dev -var="environment=dev"
           PLAN_EXIT_CODE=$?
           set -e
 
           if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
             echo "No Terraform changes detected in dev."
           elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
-            echo "Terraform changes detected in dev. Failing CD intentionally for verification."
-            exit 1
+            echo "Terraform changes detected in dev. Checking for destructive actions..."
+            terraform show -json tfplan-dev > tfplan-dev.json
+            DESTRUCTIVE_COUNT=$(jq '[.resource_changes[]? | select(any(.change.actions[]; . == "delete"))] | length' tfplan-dev.json)
+
+            if [ "$DESTRUCTIVE_COUNT" -gt 0 ]; then
+              echo "Destructive Terraform changes detected in dev. Failing CD."
+              jq -r '.resource_changes[]? | select(any(.change.actions[]; . == "delete")) | "- \(.address): \(.change.actions | join(","))"' tfplan-dev.json
+              exit 1
+            fi
+
+            echo "Only non-destructive changes detected in dev."
           else
             echo "Terraform plan failed in dev."
             exit "$PLAN_EXIT_CODE"
@@ -169,15 +178,24 @@ jobs:
       - name: Terraform Plan (Stg)
         run: |
           set +e
-          terraform plan -no-color -input=false -detailed-exitcode -var="environment=stg"
+          terraform plan -no-color -input=false -detailed-exitcode -out=tfplan-stg -var="environment=stg"
           PLAN_EXIT_CODE=$?
           set -e
 
           if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
             echo "No Terraform changes detected in stg."
           elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
-            echo "Terraform changes detected in stg. Failing CD intentionally for verification."
-            exit 1
+            echo "Terraform changes detected in stg. Checking for destructive actions..."
+            terraform show -json tfplan-stg > tfplan-stg.json
+            DESTRUCTIVE_COUNT=$(jq '[.resource_changes[]? | select(any(.change.actions[]; . == "delete"))] | length' tfplan-stg.json)
+
+            if [ "$DESTRUCTIVE_COUNT" -gt 0 ]; then
+              echo "Destructive Terraform changes detected in stg. Failing CD."
+              jq -r '.resource_changes[]? | select(any(.change.actions[]; . == "delete")) | "- \(.address): \(.change.actions | join(","))"' tfplan-stg.json
+              exit 1
+            fi
+
+            echo "Only non-destructive changes detected in stg."
           else
             echo "Terraform plan failed in stg."
             exit "$PLAN_EXIT_CODE"
@@ -269,15 +287,24 @@ jobs:
       - name: Terraform Plan (Prod)
         run: |
           set +e
-          terraform plan -no-color -input=false -detailed-exitcode -var="environment=prod"
+          terraform plan -no-color -input=false -detailed-exitcode -out=tfplan-prod -var="environment=prod"
           PLAN_EXIT_CODE=$?
           set -e
 
           if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
             echo "No Terraform changes detected in prod."
           elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
-            echo "Terraform changes detected in prod. Failing CD intentionally for verification."
-            exit 1
+            echo "Terraform changes detected in prod. Checking for destructive actions..."
+            terraform show -json tfplan-prod > tfplan-prod.json
+            DESTRUCTIVE_COUNT=$(jq '[.resource_changes[]? | select(any(.change.actions[]; . == "delete"))] | length' tfplan-prod.json)
+
+            if [ "$DESTRUCTIVE_COUNT" -gt 0 ]; then
+              echo "Destructive Terraform changes detected in prod. Failing CD."
+              jq -r '.resource_changes[]? | select(any(.change.actions[]; . == "delete")) | "- \(.address): \(.change.actions | join(","))"' tfplan-prod.json
+              exit 1
+            fi
+
+            echo "Only non-destructive changes detected in prod."
           else
             echo "Terraform plan failed in prod."
             exit "$PLAN_EXIT_CODE"

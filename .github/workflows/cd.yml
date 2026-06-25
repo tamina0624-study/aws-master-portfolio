@@ -82,6 +82,10 @@ jobs:
           fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Disable Prevent Destroy For Simulation (Dev)
+        run: sed -i 's/prevent_destroy = true/prevent_destroy = false/' main.tf
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Plan (Dev)
         run: |
           set +e

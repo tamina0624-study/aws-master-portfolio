@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  bucket_name = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  bucket_name = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-1"
   bucket_arn  = "arn:aws:s3:::${local.bucket_name}"
 }
 

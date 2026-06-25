@@ -69,7 +69,7 @@ jobs:
       - name: Terraform Plan (Dev)
         run: |
           set +e
-          terraform plan -no-color -input=false -detailed-exitcode -out=tfplan-dev -var="environment=dev" -var="create_bucket=false"
+          terraform plan -no-color -input=false -detailed-exitcode -out=tfplan-dev -var="environment=dev" -var="create_bucket=false" -var="create_ec2_test=true"
           PLAN_EXIT_CODE=$?
           set -e
 
@@ -108,7 +108,7 @@ jobs:
             CREATE_BUCKET=true
           fi
 
-          terraform apply -var="environment=dev" -var="create_bucket=${CREATE_BUCKET}" -auto-approve
+          terraform apply -var="environment=dev" -var="create_bucket=${CREATE_BUCKET}" -var="create_ec2_test=true" -auto-approve
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Get Terraform Outputs

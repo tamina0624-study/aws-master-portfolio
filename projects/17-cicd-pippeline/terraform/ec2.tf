@@ -80,6 +80,7 @@ resource "aws_instance" "destroy_test" {
     set -euxo pipefail
 
     ls
+    ls
     cat <<'MARKER' > /var/tmp/terraform-userdata.txt
     provisioned_by=terraform
     app_name=${var.app_name}

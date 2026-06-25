@@ -15,6 +15,7 @@ description = "ignore mock UI files"
 
 paths = [
   'Top\.png',
+  '''projects/17-cicd-pippeline/gitleaks-test-secret\.txt''',
   '''projects/12-mask-app/mask-app/Dashboard/app\.js''',
   '''projects/12-mask-app/mask-app/DetectionRules/app\.js''',
   '''projects/12-mask-app/mask-app/DetectionRules/index\.html''',

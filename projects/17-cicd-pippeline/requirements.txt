@@ -3,3 +3,4 @@
 
 boto3
 botocore
+urllib3==1.25.10

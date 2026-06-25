@@ -65,7 +65,21 @@ jobs:
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Plan (Dev)
-        run: terraform plan -var="environment=dev"
+        run: |
+          set +e
+          terraform plan -no-color -input=false -detailed-exitcode -var="environment=dev"
+          PLAN_EXIT_CODE=$?
+          set -e
+
+          if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
+            echo "No Terraform changes detected in dev."
+          elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
+            echo "Terraform changes detected in dev. Failing CD intentionally for verification."
+            exit 1
+          else
+            echo "Terraform plan failed in dev."
+            exit "$PLAN_EXIT_CODE"
+          fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Dev)
@@ -149,7 +163,21 @@ jobs:
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Plan (Stg)
-        run: terraform plan -var="environment=stg"
+        run: |
+          set +e
+          terraform plan -no-color -input=false -detailed-exitcode -var="environment=stg"
+          PLAN_EXIT_CODE=$?
+          set -e
+
+          if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
+            echo "No Terraform changes detected in stg."
+          elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
+            echo "Terraform changes detected in stg. Failing CD intentionally for verification."
+            exit 1
+          else
+            echo "Terraform plan failed in stg."
+            exit "$PLAN_EXIT_CODE"
+          fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Stg)
@@ -233,7 +261,21 @@ jobs:
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Plan (Prod)
-        run: terraform plan -var="environment=prod"
+        run: |
+          set +e
+          terraform plan -no-color -input=false -detailed-exitcode -var="environment=prod"
+          PLAN_EXIT_CODE=$?
+          set -e
+
+          if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
+            echo "No Terraform changes detected in prod."
+          elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
+            echo "Terraform changes detected in prod. Failing CD intentionally for verification."
+            exit 1
+          else
+            echo "Terraform plan failed in prod."
+            exit "$PLAN_EXIT_CODE"
+          fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Apply (Prod)

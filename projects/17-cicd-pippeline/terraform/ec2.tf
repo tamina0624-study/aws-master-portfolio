@@ -26,7 +26,7 @@ data "aws_ami" "ec2_test" {
 resource "aws_vpc" "ec2_test" {
   #checkov:skip=CKV2_AWS_11:VPC flow logs are configured in aws_flow_log.ec2_test_vpc; graph check can miss count-based links.
   #checkov:skip=CKV2_AWS_12:Default security group is managed by aws_default_security_group.ec2_test; graph check can miss count-based links.
-  count  = 1
+  count = 1
 
   cidr_block           = var.ec2_test_vpc_cidr
   enable_dns_support   = true
@@ -151,7 +151,7 @@ resource "aws_flow_log" "ec2_test_vpc" {
 }
 
 resource "aws_subnet" "ec2_test" {
-  count  = 1
+  count = 1
 
   vpc_id                  = aws_vpc.ec2_test[0].id
   cidr_block              = var.ec2_test_subnet_cidr
@@ -174,7 +174,7 @@ resource "aws_default_security_group" "ec2_test" {
 
 resource "aws_security_group" "ec2_test" {
   #checkov:skip=CKV2_AWS_5:Security group is attached through aws_network_interface.ec2_test_primary in this file; graph check can miss count-based links.
-  count  = 1
+  count = 1
 
   name        = "${var.project_name}-${var.app_name}-${var.environment}-ec2-test-sg"
   description = "Security group for EC2 destroy test"
@@ -224,12 +224,12 @@ resource "aws_network_interface" "ec2_test_primary" {
 resource "aws_instance" "destroy_test" {
   #checkov:skip=CKV_AWS_126:Detailed monitoring is intentionally disabled for this short-lived cost-optimized test instance.
   #checkov:skip=CKV_AWS_135:t2.micro does not support EBS optimization in this learning stack.
-  count  = 1
+  count = 1
 
-  ami                         = data.aws_ami.ec2_test.id
-  instance_type               = var.ec2_test_instance_type
-  iam_instance_profile        = aws_iam_instance_profile.ec2_test_instance[0].name
-  user_data                   = <<-EOF
+  ami                  = data.aws_ami.ec2_test.id
+  instance_type        = var.ec2_test_instance_type
+  iam_instance_profile = aws_iam_instance_profile.ec2_test_instance[0].name
+  user_data            = <<-EOF
     #!/bin/bash
     set -euxo pipefail
 

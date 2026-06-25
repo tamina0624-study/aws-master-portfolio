@@ -46,7 +46,7 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
 }
 
 data "aws_iam_policy_document" "app_bucket_ip_restriction" {
-  count  = 1
+  count = 1
 
   statement {
     sid    = "DenyRequestsOutsideAllowedSourceIp"

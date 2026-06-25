@@ -75,6 +75,19 @@ resource "aws_instance" "destroy_test" {
   subnet_id                   = aws_subnet.ec2_test[0].id
   vpc_security_group_ids      = [aws_security_group.ec2_test[0].id]
   associate_public_ip_address = false
+  user_data                   = <<-EOF
+    #!/bin/bash
+    set -euxo pipefail
+
+    cat <<'MARKER' > /var/tmp/terraform-userdata.txt
+    provisioned_by=terraform
+    app_name=${var.app_name}
+    environment=${var.environment}
+    MARKER
+
+    hostnamectl >> /var/tmp/terraform-userdata.txt
+    date -Is >> /var/tmp/terraform-userdata.txt
+  EOF
 
   metadata_options {
     http_endpoint = "enabled"

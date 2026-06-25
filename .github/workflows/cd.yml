@@ -79,7 +79,7 @@ jobs:
           SG_NAME="cicd-learning-sample-app-dev-ec2-test-sg"
           FLOW_LOGS_ROLE_NAME="cicd-learning-sample-app-dev-flowlogs-role"
           INSTANCE_ROLE_NAME="cicd-learning-sample-app-dev-ec2-test-instance-role"
-          KMS_DESCRIPTION="KMS key for EC2 test VPC flow logs"
+          KMS_DESCRIPTION="KMS key for EC2 test VPC flow logs v2"
 
           if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
             echo "S3 bucket already exists in state."
@@ -110,7 +110,7 @@ jobs:
             terraform import 'aws_s3_bucket_policy.app_bucket_policy[0]' "${S3_BUCKET_NAME}" || true
           fi
 
-          if terraform state list 2>/dev/null | grep -q '^aws_kms_key.ec2_test_flow_logs\[0\]$'; then
+          if terraform state list 2>/dev/null | grep -q '^aws_kms_key.ec2_test_flow_logs_v2\[0\]$'; then
             echo "KMS key already exists in state."
           else
             KMS_KEY_ID=$(aws kms list-keys --query 'Keys[].KeyId' --output text | tr '\t' '\n' | while read -r KEY_ID; do
@@ -123,7 +123,7 @@ jobs:
             done)
 
             if [ -n "${KMS_KEY_ID}" ] && [ "${KMS_KEY_ID}" != "None" ]; then
-              terraform import 'aws_kms_key.ec2_test_flow_logs[0]' "${KMS_KEY_ID}"
+              terraform import 'aws_kms_key.ec2_test_flow_logs_v2[0]' "${KMS_KEY_ID}"
             else
               echo "No existing KMS key found to import."
             fi

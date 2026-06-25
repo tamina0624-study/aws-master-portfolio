@@ -66,6 +66,69 @@ jobs:
           echo "TF_VAR_ip_restriction_exempt_principal_arns=[\"${ROLE_ARN}\",\"${ASSUMED_ROLE_ARN}\"]" >> "$GITHUB_ENV"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Terraform Import EC2 Test Resources (Dev)
+        run: |
+          set -euo pipefail
+
+          VPC_TAG_NAME="sample-app-ec2-test-vpc"
+          SUBNET_TAG_NAME="sample-app-ec2-test-subnet"
+          INSTANCE_TAG_NAME="sample-app-destroy-test"
+          SG_NAME="cicd-learning-sample-app-dev-ec2-test-sg"
+
+          if terraform state list | grep -q '^aws_vpc.ec2_test\[0\]$'; then
+            echo "VPC already exists in state."
+            VPC_ID=$(terraform state show 'aws_vpc.ec2_test[0]' | awk '/^id\s+=/{print $3}')
+          else
+            VPC_ID=$(aws ec2 describe-vpcs \
+              --filters "Name=tag:Name,Values=${VPC_TAG_NAME}" "Name=tag:Environment,Values=dev" "Name=tag:Project,Values=cicd-learning" \
+              --query 'Vpcs[0].VpcId' --output text)
+            if [ -n "${VPC_ID}" ] && [ "${VPC_ID}" != "None" ]; then
+              terraform import 'aws_vpc.ec2_test[0]' "${VPC_ID}"
+            else
+              echo "No existing VPC found to import."
+            fi
+          fi
+
+          if terraform state list | grep -q '^aws_subnet.ec2_test\[0\]$'; then
+            echo "Subnet already exists in state."
+          else
+            SUBNET_ID=$(aws ec2 describe-subnets \
+              --filters "Name=tag:Name,Values=${SUBNET_TAG_NAME}" "Name=tag:Environment,Values=dev" "Name=tag:Project,Values=cicd-learning" \
+              --query 'Subnets[0].SubnetId' --output text)
+            if [ -n "${SUBNET_ID}" ] && [ "${SUBNET_ID}" != "None" ]; then
+              terraform import 'aws_subnet.ec2_test[0]' "${SUBNET_ID}"
+            else
+              echo "No existing Subnet found to import."
+            fi
+          fi
+
+          if terraform state list | grep -q '^aws_security_group.ec2_test\[0\]$'; then
+            echo "Security Group already exists in state."
+          else
+            SG_ID=$(aws ec2 describe-security-groups \
+              --filters "Name=group-name,Values=${SG_NAME}" \
+              --query 'SecurityGroups[0].GroupId' --output text)
+            if [ -n "${SG_ID}" ] && [ "${SG_ID}" != "None" ]; then
+              terraform import 'aws_security_group.ec2_test[0]' "${SG_ID}"
+            else
+              echo "No existing Security Group found to import."
+            fi
+          fi
+
+          if terraform state list | grep -q '^aws_instance.destroy_test\[0\]$'; then
+            echo "EC2 instance already exists in state."
+          else
+            INSTANCE_ID=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=${INSTANCE_TAG_NAME}" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+              --query 'Reservations[0].Instances[0].InstanceId' --output text)
+            if [ -n "${INSTANCE_ID}" ] && [ "${INSTANCE_ID}" != "None" ]; then
+              terraform import 'aws_instance.destroy_test[0]' "${INSTANCE_ID}"
+            else
+              echo "No existing EC2 instance found to import."
+            fi
+          fi
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Plan (Dev)
         run: |
           set +e

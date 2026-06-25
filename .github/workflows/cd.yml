@@ -77,6 +77,9 @@ jobs:
           SUBNET_TAG_NAME="sample-app-ec2-test-subnet"
           INSTANCE_TAG_NAME="sample-app-destroy-test"
           SG_NAME="cicd-learning-sample-app-dev-ec2-test-sg"
+          FLOW_LOGS_ROLE_NAME="cicd-learning-sample-app-dev-flowlogs-role"
+          INSTANCE_ROLE_NAME="cicd-learning-sample-app-dev-ec2-test-instance-role"
+          KMS_DESCRIPTION="KMS key for EC2 test VPC flow logs"
 
           if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
             echo "S3 bucket already exists in state."
@@ -105,6 +108,45 @@ jobs:
             echo "S3 bucket policy already exists in state."
           elif terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
             terraform import 'aws_s3_bucket_policy.app_bucket_policy[0]' "${S3_BUCKET_NAME}" || true
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_kms_key.ec2_test_flow_logs\[0\]$'; then
+            echo "KMS key already exists in state."
+          else
+            KMS_KEY_ID=$(aws kms list-keys --query 'Keys[].KeyId' --output text | tr '\t' '\n' | while read -r KEY_ID; do
+              [ -n "${KEY_ID}" ] || continue
+              KEY_DESC=$(aws kms describe-key --key-id "${KEY_ID}" --query 'KeyMetadata.Description' --output text 2>/dev/null || true)
+              if [ "${KEY_DESC}" = "${KMS_DESCRIPTION}" ]; then
+                echo "${KEY_ID}"
+                break
+              fi
+            done)
+
+            if [ -n "${KMS_KEY_ID}" ] && [ "${KMS_KEY_ID}" != "None" ]; then
+              terraform import 'aws_kms_key.ec2_test_flow_logs[0]' "${KMS_KEY_ID}"
+            else
+              echo "No existing KMS key found to import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_iam_role.ec2_test_flow_logs\[0\]$'; then
+            echo "Flow logs IAM role already exists in state."
+          else
+            if aws iam get-role --role-name "${FLOW_LOGS_ROLE_NAME}" >/dev/null 2>&1; then
+              terraform import 'aws_iam_role.ec2_test_flow_logs[0]' "${FLOW_LOGS_ROLE_NAME}"
+            else
+              echo "No existing flow logs IAM role found to import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_iam_role.ec2_test_instance\[0\]$'; then
+            echo "EC2 instance IAM role already exists in state."
+          else
+            if aws iam get-role --role-name "${INSTANCE_ROLE_NAME}" >/dev/null 2>&1; then
+              terraform import 'aws_iam_role.ec2_test_instance[0]' "${INSTANCE_ROLE_NAME}"
+            else
+              echo "No existing EC2 instance IAM role found to import."
+            fi
           fi
 
           if terraform state list 2>/dev/null | grep -q '^aws_vpc.ec2_test\[0\]$'; then

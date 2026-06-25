@@ -1,8 +1,8 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  bucket_name = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-2"
-  bucket_arn  = "arn:aws:s3:::local.bucket_name1"
+  bucket_name = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  bucket_arn  = "arn:aws:s3:::${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
 }
 
 # バケットが存在しない場合のみ作成
@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "app_bucket" {
   bucket = local.bucket_name
 
   tags = {
-    Name = "${var.app_name}-bucket1"
+    Name = "${var.app_name}-bucket2"
   }
 
   lifecycle {

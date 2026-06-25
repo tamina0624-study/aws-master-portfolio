@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 locals {
   bucket_name = "${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
-  bucket_arn  = "arn:aws:s3:::${var.project_name}-${var.app_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  bucket_arn  = "arn:aws:s3:::${local.bucket_name}"
 }
 
 # バケットが存在しない場合のみ作成
@@ -14,10 +14,11 @@ resource "aws_s3_bucket" "app_bucket" {
   #checkov:skip=CKV2_AWS_61:Lifecycle configuration is intentionally omitted for demo data retention
   #checkov:skip=CKV_AWS_21:Versioning is configured via separate aws_s3_bucket_versioning resource
   #checkov:skip=CKV2_AWS_6:Public access block is configured via separate aws_s3_bucket_public_access_block resource
+  count  = 1
   bucket = local.bucket_name
 
   tags = {
-    Name = "${var.app_name}-bucket"
+    Name = "${var.app_name}-bucket1"
   }
 
   lifecycle {
@@ -26,6 +27,7 @@ resource "aws_s3_bucket" "app_bucket" {
 }
 
 resource "aws_s3_bucket_public_access_block" "app_bucket_pab" {
+  count  = 1
   bucket = aws_s3_bucket.app_bucket[0].id
 
   block_public_acls       = true
@@ -35,6 +37,7 @@ resource "aws_s3_bucket_public_access_block" "app_bucket_pab" {
 }
 
 resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
+  count  = 1
   bucket = aws_s3_bucket.app_bucket[0].id
 
   versioning_configuration {
@@ -43,6 +46,7 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
 }
 
 data "aws_iam_policy_document" "app_bucket_ip_restriction" {
+  count  = 1
 
   statement {
     sid    = "DenyRequestsOutsideAllowedSourceIp"
@@ -78,6 +82,7 @@ data "aws_iam_policy_document" "app_bucket_ip_restriction" {
 }
 
 resource "aws_s3_bucket_policy" "app_bucket_policy" {
+  count  = 1
   bucket = local.bucket_name
   policy = data.aws_iam_policy_document.app_bucket_ip_restriction[0].json
 }

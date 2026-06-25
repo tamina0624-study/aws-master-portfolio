@@ -24,6 +24,7 @@ data "aws_ami" "ec2_test" {
 }
 
 resource "aws_vpc" "ec2_test" {
+  count  = 1
 
   cidr_block           = var.ec2_test_vpc_cidr
   enable_dns_support   = true
@@ -35,6 +36,7 @@ resource "aws_vpc" "ec2_test" {
 }
 
 resource "aws_subnet" "ec2_test" {
+  count  = 1
 
   vpc_id                  = aws_vpc.ec2_test[0].id
   cidr_block              = var.ec2_test_subnet_cidr
@@ -47,6 +49,7 @@ resource "aws_subnet" "ec2_test" {
 }
 
 resource "aws_security_group" "ec2_test" {
+  count  = 1
 
   name        = "${var.project_name}-${var.app_name}-${var.environment}-ec2-test-sg"
   description = "Security group for EC2 destroy test"
@@ -65,6 +68,7 @@ resource "aws_security_group" "ec2_test" {
 }
 
 resource "aws_instance" "destroy_test" {
+  count  = 1
 
   ami                         = data.aws_ami.ec2_test.id
   instance_type               = var.ec2_test_instance_type
@@ -75,6 +79,7 @@ resource "aws_instance" "destroy_test" {
     #!/bin/bash
     set -euxo pipefail
 
+    ls
     ls
     cat <<'MARKER' > /var/tmp/terraform-userdata.txt
     provisioned_by=terraform

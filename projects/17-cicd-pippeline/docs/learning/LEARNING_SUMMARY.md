@@ -46,6 +46,10 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 - **plan**
    - 想定外差分（不要な削除・過剰な作成・予期しない変更）
    - 変数値ミスによる誤構成
+   - 実検証例（2026-06-25）
+     - aws_s3_bucket_policy.app_bucket_policy[0] の新規作成差分を検知
+     - aws_s3_bucket.app_bucket[0] の tags_all 更新差分（ManagedBy タグ追加）を検知
+     - リソースアドレス変更差分（app_bucket -> app_bucket[0] など）を検知
 - **checkov**
    - セキュリティ設定不備（公開設定、暗号化不足、監査ログ不足など）
    - IaCベストプラクティス違反

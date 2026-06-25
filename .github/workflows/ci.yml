@@ -137,7 +137,34 @@ jobs:
       - name: Terraform plan
         # 認証情報がない環境では plan をスキップ
         if: ${{ vars.AWS_ROLE_ARN != '' }}
-        run: terraform plan -input=false -no-color
+        run: |
+          set +e
+          terraform plan -input=false -no-color -detailed-exitcode -out=tfplan
+          PLAN_EXIT_CODE=$?
+          set -e
+
+          if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
+            echo "No Terraform changes detected."
+          elif [ "$PLAN_EXIT_CODE" -eq 1 ]; then
+            echo "Terraform plan failed."
+            exit 1
+          elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
+            echo "Terraform changes detected. Checking for destructive actions..."
+            terraform show -json tfplan > tfplan.json
+
+            DESTRUCTIVE_COUNT=$(jq '[.resource_changes[]? | select(any(.change.actions[]; . == "delete"))] | length' tfplan.json)
+
+            if [ "$DESTRUCTIVE_COUNT" -gt 0 ]; then
+              echo "Destructive Terraform changes detected (delete/replace). Failing CI."
+              jq -r '.resource_changes[]? | select(any(.change.actions[]; . == "delete")) | "- \(.address): \(.change.actions | join(","))"' tfplan.json
+              exit 1
+            fi
+
+            echo "Only non-destructive changes detected. CI will continue."
+          else
+            echo "Unexpected terraform plan exit code: $PLAN_EXIT_CODE"
+            exit "$PLAN_EXIT_CODE"
+          fi
 
       - name: Skip plan note
         # なぜ plan を実行しなかったかをログに残す

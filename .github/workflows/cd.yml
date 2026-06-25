@@ -66,6 +66,22 @@ jobs:
           echo "TF_VAR_ip_restriction_exempt_principal_arns=[\"${ROLE_ARN}\",\"${ASSUMED_ROLE_ARN}\"]" >> "$GITHUB_ENV"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
+      - name: Import Existing Bucket For Destroy Simulation (Dev)
+        run: |
+          set -euo pipefail
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="cicd-learning-sample-app-dev-${ACCOUNT_ID}"
+
+          BUCKET_EXISTS=$(aws s3api list-buckets --query "length(Buckets[?Name=='${BUCKET_NAME}'])" --output text)
+          if [ "${BUCKET_EXISTS}" = "1" ]; then
+            echo "Import existing bucket into temporary state for destroy simulation: ${BUCKET_NAME}"
+            terraform import -input=false -no-color -var="environment=dev" -var="create_bucket=true" 'aws_s3_bucket.app_bucket[0]' "${BUCKET_NAME}"
+          else
+            echo "Bucket ${BUCKET_NAME} does not exist. Destroy simulation cannot be performed."
+            exit 1
+          fi
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
       - name: Terraform Plan (Dev)
         run: |
           set +e

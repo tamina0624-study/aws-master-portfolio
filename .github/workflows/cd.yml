@@ -64,6 +64,7 @@ jobs:
           ROLE_NAME="${ROLE_ARN##*/}"
           ASSUMED_ROLE_ARN="arn:aws:sts::${ACCOUNT_ID}:assumed-role/${ROLE_NAME}/*"
           echo "TF_VAR_ip_restriction_exempt_principal_arns=[\"${ROLE_ARN}\",\"${ASSUMED_ROLE_ARN}\"]" >> "$GITHUB_ENV"
+          echo "TF_VAR_kms_admin_principal_arns=[\"${ROLE_ARN}\"]" >> "$GITHUB_ENV"
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 
       - name: Terraform Import EC2 Test Resources (Dev)
@@ -79,6 +80,7 @@ jobs:
           SG_NAME="cicd-learning-sample-app-dev-ec2-test-sg"
           FLOW_LOGS_ROLE_NAME="cicd-learning-sample-app-dev-flowlogs-role"
           INSTANCE_ROLE_NAME="cicd-learning-sample-app-dev-ec2-test-instance-role"
+          INSTANCE_PROFILE_NAME="cicd-learning-sample-app-dev-ec2-test-instance-profile"
           KMS_DESCRIPTION="KMS key for EC2 test VPC flow logs v2"
 
           if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
@@ -146,6 +148,16 @@ jobs:
               terraform import 'aws_iam_role.ec2_test_instance[0]' "${INSTANCE_ROLE_NAME}"
             else
               echo "No existing EC2 instance IAM role found to import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_iam_instance_profile.ec2_test_instance\[0\]$'; then
+            echo "EC2 instance profile already exists in state."
+          else
+            if aws iam get-instance-profile --instance-profile-name "${INSTANCE_PROFILE_NAME}" >/dev/null 2>&1; then
+              terraform import 'aws_iam_instance_profile.ec2_test_instance[0]' "${INSTANCE_PROFILE_NAME}"
+            else
+              echo "No existing EC2 instance profile found to import."
             fi
           fi
 

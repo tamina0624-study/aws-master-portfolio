@@ -64,12 +64,12 @@ data "aws_iam_policy_document" "ec2_test_flow_logs_kms" {
   #checkov:skip=CKV_AWS_356:For KMS key policies, Resource must be "*" by AWS design and cannot be narrowed to an ARN.
   #checkov:skip=CKV_AWS_109:Key administration statement for account root is intentionally broad to prevent key lockout in this learning stack.
   statement {
-    sid    = "EnableRootPermissions"
+    sid    = "AllowRootAndAdmin"
     effect = "Allow"
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+      identifiers = ["arn:aws:iam::638892640336:root"]
     }
 
     actions   = ["kms:*"]
@@ -77,12 +77,12 @@ data "aws_iam_policy_document" "ec2_test_flow_logs_kms" {
   }
 
   statement {
-    sid    = "AllowCloudWatchLogsUse"
+    sid    = "AllowVPCFlowLogsToUseKey"
     effect = "Allow"
 
     principals {
       type        = "Service"
-      identifiers = ["logs.${var.aws_region}.amazonaws.com"]
+      identifiers = ["delivery.logs.amazonaws.com"]
     }
 
     actions = [
@@ -96,10 +96,10 @@ data "aws_iam_policy_document" "ec2_test_flow_logs_kms" {
   }
 }
 
-resource "aws_kms_key" "ec2_test_flow_logs_v3" {
+resource "aws_kms_key" "ec2_test_flow_logs_v4" {
   count = 1
 
-  description         = "KMS key for EC2 test VPC flow logs v3"
+  description         = "KMS key for EC2 test VPC flow logs v4"
   enable_key_rotation = true
   policy              = data.aws_iam_policy_document.ec2_test_flow_logs_kms.json
 }
@@ -109,7 +109,7 @@ resource "aws_cloudwatch_log_group" "ec2_test_flow_logs" {
 
   name              = "/aws/vpc/${var.project_name}-${var.app_name}-${var.environment}-ec2-test"
   retention_in_days = 365
-  kms_key_id        = aws_kms_key.ec2_test_flow_logs_v3[0].arn
+  kms_key_id        = aws_kms_key.ec2_test_flow_logs_v4[0].arn
 }
 
 resource "aws_iam_role" "ec2_test_flow_logs" {

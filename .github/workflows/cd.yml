@@ -69,7 +69,7 @@ jobs:
       - name: Terraform Plan (Dev)
         run: |
           set +e
-          terraform plan -no-color -input=false -detailed-exitcode -out=tfplan-dev -var="environment=dev"
+          terraform plan -no-color -input=false -detailed-exitcode -out=tfplan-dev -var="environment=dev" -var="create_bucket=false"
           PLAN_EXIT_CODE=$?
           set -e
 

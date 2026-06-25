@@ -60,6 +60,9 @@ data "aws_iam_policy_document" "ec2_test_instance_assume_role" {
 }
 
 data "aws_iam_policy_document" "ec2_test_flow_logs_kms" {
+  #checkov:skip=CKV_AWS_111:KMS key policies require Resource "*" and controlled principals; this policy is scoped to account root and CloudWatch Logs service.
+  #checkov:skip=CKV_AWS_356:For KMS key policies, Resource must be "*" by AWS design and cannot be narrowed to an ARN.
+  #checkov:skip=CKV_AWS_109:Key administration statement for account root is intentionally broad to prevent key lockout in this learning stack.
   statement {
     sid    = "EnableRootPermissions"
     effect = "Allow"

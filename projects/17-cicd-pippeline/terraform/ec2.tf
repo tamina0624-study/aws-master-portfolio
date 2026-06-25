@@ -1,0 +1,87 @@
+data "aws_ami" "ec2_test" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023*-x86_64"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+}
+
+resource "aws_vpc" "ec2_test" {
+  count = var.create_ec2_test ? 1 : 0
+
+  cidr_block           = var.ec2_test_vpc_cidr
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+
+  tags = {
+    Name = "${var.app_name}-ec2-test-vpc"
+  }
+}
+
+resource "aws_subnet" "ec2_test" {
+  count = var.create_ec2_test ? 1 : 0
+
+  vpc_id                  = aws_vpc.ec2_test[0].id
+  cidr_block              = var.ec2_test_subnet_cidr
+  availability_zone       = "${var.aws_region}a"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "${var.app_name}-ec2-test-subnet"
+  }
+}
+
+resource "aws_security_group" "ec2_test" {
+  count = var.create_ec2_test ? 1 : 0
+
+  name        = "${var.project_name}-${var.app_name}-${var.environment}-ec2-test-sg"
+  description = "Security group for EC2 destroy test"
+  vpc_id      = aws_vpc.ec2_test[0].id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.app_name}-ec2-test-sg"
+  }
+}
+
+resource "aws_instance" "destroy_test" {
+  count = var.create_ec2_test ? 1 : 0
+
+  ami                         = data.aws_ami.ec2_test.id
+  instance_type               = var.ec2_test_instance_type
+  subnet_id                   = aws_subnet.ec2_test[0].id
+  vpc_security_group_ids      = [aws_security_group.ec2_test[0].id]
+  associate_public_ip_address = false
+
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
+  }
+
+  tags = {
+    Name = "${var.app_name}-destroy-test"
+  }
+}

@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "app_bucket" {
   bucket = local.bucket_name
 
   tags = {
-    Name = "${var.app_name}-bucket2"
+    Name = "${var.app_name}-bucket"
   }
 
   lifecycle {

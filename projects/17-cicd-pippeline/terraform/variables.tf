@@ -39,3 +39,27 @@ variable "ip_restriction_exempt_principal_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "create_ec2_test" {
+  description = "Whether Terraform should create isolated EC2 resources for destroy testing"
+  type        = bool
+  default     = false
+}
+
+variable "ec2_test_instance_type" {
+  description = "Instance type for the EC2 destroy test"
+  type        = string
+  default     = "t2.micro"
+}
+
+variable "ec2_test_vpc_cidr" {
+  description = "CIDR block for the isolated EC2 test VPC"
+  type        = string
+  default     = "10.42.0.0/16"
+}
+
+variable "ec2_test_subnet_cidr" {
+  description = "CIDR block for the isolated EC2 test subnet"
+  type        = string
+  default     = "10.42.1.0/24"
+}

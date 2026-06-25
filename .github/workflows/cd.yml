@@ -69,13 +69,14 @@ jobs:
       - name: Terraform Import EC2 Test Resources (Dev)
         run: |
           set -euo pipefail
+          export TF_VAR_create_ec2_test=true
 
           VPC_TAG_NAME="sample-app-ec2-test-vpc"
           SUBNET_TAG_NAME="sample-app-ec2-test-subnet"
           INSTANCE_TAG_NAME="sample-app-destroy-test"
           SG_NAME="cicd-learning-sample-app-dev-ec2-test-sg"
 
-          if terraform state list | grep -q '^aws_vpc.ec2_test\[0\]$'; then
+          if terraform state list 2>/dev/null | grep -q '^aws_vpc.ec2_test\[0\]$'; then
             echo "VPC already exists in state."
             VPC_ID=$(terraform state show 'aws_vpc.ec2_test[0]' | awk '/^id\s+=/{print $3}')
           else
@@ -89,7 +90,7 @@ jobs:
             fi
           fi
 
-          if terraform state list | grep -q '^aws_subnet.ec2_test\[0\]$'; then
+          if terraform state list 2>/dev/null | grep -q '^aws_subnet.ec2_test\[0\]$'; then
             echo "Subnet already exists in state."
           else
             SUBNET_ID=$(aws ec2 describe-subnets \
@@ -102,7 +103,7 @@ jobs:
             fi
           fi
 
-          if terraform state list | grep -q '^aws_security_group.ec2_test\[0\]$'; then
+          if terraform state list 2>/dev/null | grep -q '^aws_security_group.ec2_test\[0\]$'; then
             echo "Security Group already exists in state."
           else
             SG_ID=$(aws ec2 describe-security-groups \
@@ -115,7 +116,7 @@ jobs:
             fi
           fi
 
-          if terraform state list | grep -q '^aws_instance.destroy_test\[0\]$'; then
+          if terraform state list 2>/dev/null | grep -q '^aws_instance.destroy_test\[0\]$'; then
             echo "EC2 instance already exists in state."
           else
             INSTANCE_ID=$(aws ec2 describe-instances \

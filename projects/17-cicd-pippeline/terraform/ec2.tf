@@ -71,7 +71,8 @@ resource "aws_kms_key" "ec2_test_flow_logs_v4" {
         Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/GitHubActionsRole"
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/GitHubActionsRole",
+          AWS = "arn:aws:logs:us-east-2:${data.aws_caller_identity.current.account_id}:log-group:*"
         }
         Action   = "kms:*"
         Resource = "*"

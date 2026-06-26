@@ -155,7 +155,7 @@ resource "aws_flow_log" "ec2_test_vpc" {
 
   iam_role_arn         = aws_iam_role.ec2_test_flow_logs[0].arn
   log_destination_type = "cloud-watch-logs"
-  log_destination      = aws_cloudwatch_log_group.ec2_test_flow_logs[0].name
+  log_destination      = aws_cloudwatch_log_group.ec2_test_flow_logs[0].arn
   traffic_type         = "ALL"
   vpc_id               = aws_vpc.ec2_test[0].id
 

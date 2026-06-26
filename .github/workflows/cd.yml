@@ -81,7 +81,7 @@ jobs:
           FLOW_LOGS_ROLE_NAME="cicd-learning-sample-app-dev-flowlogs-role"
           INSTANCE_ROLE_NAME="cicd-learning-sample-app-dev-ec2-test-instance-role"
           INSTANCE_PROFILE_NAME="cicd-learning-sample-app-dev-ec2-test-instance-profile"
-          KMS_DESCRIPTION="KMS key for EC2 test VPC flow logs v2"
+          KMS_DESCRIPTION="KMS key for EC2 test VPC flow logs v4"
 
           if terraform state list 2>/dev/null | grep -q '^aws_s3_bucket.app_bucket\[0\]$'; then
             echo "S3 bucket already exists in state."
@@ -112,8 +112,10 @@ jobs:
             terraform import 'aws_s3_bucket_policy.app_bucket_policy[0]' "${S3_BUCKET_NAME}" || true
           fi
 
-          if terraform state list 2>/dev/null | grep -q '^aws_kms_key.ec2_test_flow_logs_v2\[0\]$'; then
-            echo "KMS key already exists in state."
+          if terraform state list 2>/dev/null | grep -q '^aws_kms_key.ec2_test_flow_logs_v4\[0\]$'; then
+            echo "KMS key v4 already exists in state."
+          elif terraform state list 2>/dev/null | grep -q '^aws_kms_key.ec2_test_flow_logs_v2\[0\]$'; then
+            echo "KMS key v2 already exists in state (legacy)."
           else
             KMS_KEY_ID=$(aws kms list-keys --query 'Keys[].KeyId' --output text | tr '\t' '\n' | while read -r KEY_ID; do
               [ -n "${KEY_ID}" ] || continue
@@ -125,9 +127,20 @@ jobs:
             done)
 
             if [ -n "${KMS_KEY_ID}" ] && [ "${KMS_KEY_ID}" != "None" ]; then
-              terraform import 'aws_kms_key.ec2_test_flow_logs_v2[0]' "${KMS_KEY_ID}"
+              terraform import 'aws_kms_key.ec2_test_flow_logs_v4[0]' "${KMS_KEY_ID}"
             else
               echo "No existing KMS key found to import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_cloudwatch_log_group.ec2_test_flow_logs\[0\]$'; then
+            echo "CloudWatch Log Group already exists in state."
+          else
+            LOG_GROUP_NAME="/aws/vpc/cicd-learning-sample-app-dev-ec2-test"
+            if aws logs describe-log-groups --log-group-name-prefix "${LOG_GROUP_NAME}" --query "logGroups[?logGroupName=='${LOG_GROUP_NAME}']" | grep -q "logGroupName"; then
+              terraform import 'aws_cloudwatch_log_group.ec2_test_flow_logs[0]' "${LOG_GROUP_NAME}"
+            else
+              echo "No existing CloudWatch Log Group found to import."
             fi
           fi
 
@@ -138,6 +151,41 @@ jobs:
               terraform import 'aws_iam_role.ec2_test_flow_logs[0]' "${FLOW_LOGS_ROLE_NAME}"
             else
               echo "No existing flow logs IAM role found to import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_iam_role_policy.ec2_test_flow_logs\[0\]$'; then
+            echo "Flow logs IAM role policy already exists in state."
+          else
+            if aws iam get-role --role-name "${FLOW_LOGS_ROLE_NAME}" >/dev/null 2>&1; then
+              terraform import 'aws_iam_role_policy.ec2_test_flow_logs[0]' "${FLOW_LOGS_ROLE_NAME}:${FLOW_LOGS_ROLE_NAME}-flowlogs-policy"
+            else
+              echo "Flow logs IAM role does not exist, skipping policy import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_flow_log.ec2_test_vpc\[0\]$'; then
+            echo "VPC Flow Log already exists in state."
+          else
+            if terraform state list 2>/dev/null | grep -q '^aws_vpc.ec2_test\[0\]$'; then
+              VPC_ID=$(terraform state show 'aws_vpc.ec2_test[0]' 2>/dev/null | awk '/^id\s+=/{print $3; exit}')
+            else
+              VPC_ID=$(aws ec2 describe-vpcs \
+                --filters "Name=tag:Name,Values=${VPC_TAG_NAME}" "Name=tag:Environment,Values=dev" "Name=tag:Project,Values=cicd-learning" \
+                --query 'Vpcs[0].VpcId' --output text 2>/dev/null || echo "None")
+            fi
+
+            if [ -n "${VPC_ID}" ] && [ "${VPC_ID}" != "None" ]; then
+              FLOW_LOG_ID=$(aws ec2 describe-flow-logs \
+                --filter "Name=resource-id,Values=${VPC_ID}" \
+                --query 'FlowLogs[0].FlowLogId' --output text 2>/dev/null || echo "None")
+              if [ -n "${FLOW_LOG_ID}" ] && [ "${FLOW_LOG_ID}" != "None" ]; then
+                terraform import 'aws_flow_log.ec2_test_vpc[0]' "${FLOW_LOG_ID}"
+              else
+                echo "No existing VPC Flow Log found to import for VPC ${VPC_ID}."
+              fi
+            else
+              echo "Could not determine VPC ID, skipping Flow Log import."
             fi
           fi
 
@@ -211,6 +259,26 @@ jobs:
               terraform import 'aws_instance.destroy_test[0]' "${INSTANCE_ID}"
             else
               echo "No existing EC2 instance found to import."
+            fi
+          fi
+
+          if terraform state list 2>/dev/null | grep -q '^aws_network_interface.ec2_test_primary\[0\]$'; then
+            echo "Network interface already exists in state."
+          else
+            INSTANCE_ID=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=${INSTANCE_TAG_NAME}" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+              --query 'Reservations[0].Instances[0].InstanceId' --output text)
+            if [ -n "${INSTANCE_ID}" ] && [ "${INSTANCE_ID}" != "None" ]; then
+              ENI_ID=$(aws ec2 describe-instances \
+                --instance-ids "${INSTANCE_ID}" \
+                --query 'Reservations[0].Instances[0].NetworkInterfaces[0].NetworkInterfaceId' --output text)
+              if [ -n "${ENI_ID}" ] && [ "${ENI_ID}" != "None" ]; then
+                terraform import 'aws_network_interface.ec2_test_primary[0]' "${ENI_ID}"
+              else
+                echo "No network interface found for the EC2 instance."
+              fi
+            else
+              echo "No existing EC2 instance found, skipping network interface import."
             fi
           fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}

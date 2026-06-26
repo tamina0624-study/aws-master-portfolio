@@ -269,23 +269,10 @@ jobs:
           fi
 
           if terraform state list 2>/dev/null | grep -q '^aws_network_interface.ec2_test_primary\[0\]$'; then
-            echo "Network interface already exists in state."
+            echo "Removing aws_network_interface.ec2_test_primary[0] from state (resource removed from config)."
+            terraform state rm 'aws_network_interface.ec2_test_primary[0]'
           else
-            INSTANCE_ID=$(aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=${INSTANCE_TAG_NAME}" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
-              --query 'Reservations[0].Instances[0].InstanceId' --output text)
-            if [ -n "${INSTANCE_ID}" ] && [ "${INSTANCE_ID}" != "None" ]; then
-              ENI_ID=$(aws ec2 describe-instances \
-                --instance-ids "${INSTANCE_ID}" \
-                --query 'Reservations[0].Instances[0].NetworkInterfaces[0].NetworkInterfaceId' --output text)
-              if [ -n "${ENI_ID}" ] && [ "${ENI_ID}" != "None" ]; then
-                terraform import 'aws_network_interface.ec2_test_primary[0]' "${ENI_ID}"
-              else
-                echo "No network interface found for the EC2 instance."
-              fi
-            else
-              echo "No existing EC2 instance found, skipping network interface import."
-            fi
+            echo "aws_network_interface.ec2_test_primary[0] not in state, skipping."
           fi
         if: ${{ vars.AWS_ROLE_ARN != '' }}
 

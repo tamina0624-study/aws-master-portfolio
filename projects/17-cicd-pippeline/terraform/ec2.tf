@@ -73,7 +73,8 @@ resource "aws_kms_key" "ec2_test_flow_logs_v4" {
         Principal = {
           AWS = [
             "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/GitHubActionsRole"
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/GitHubActionsRole",
+            "arn:aws:logs:us-east-2:${data.aws_caller_identity.current.account_id}:log-group:*"
           ]
         }
         Action   = "kms:*"

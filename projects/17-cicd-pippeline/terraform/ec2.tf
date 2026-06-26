@@ -70,7 +70,8 @@ resource "aws_kms_key" "ec2_test_flow_logs_v4" {
         Sid    = "Enable IAM User Permissions"
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+          AWS = "arn:aws:iam::638892640336:role/GitHubActionsRole"
         }
         Action   = "kms:*"
         Resource = "*"

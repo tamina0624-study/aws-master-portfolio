@@ -155,7 +155,7 @@ resource "aws_flow_log" "ec2_test_vpc" {
 
   iam_role_arn         = aws_iam_role.ec2_test_flow_logs[0].arn
   log_destination_type = "cloud-watch-logs"
-  log_group_name       = aws_cloudwatch_log_group.ec2_test_flow_logs[0].name
+  log_destination        = aws_cloudwatch_log_group.ec2_test_flow_logs[0].name
   traffic_type         = "ALL"
   vpc_id               = aws_vpc.ec2_test[0].id
 
@@ -226,21 +226,16 @@ resource "aws_iam_instance_profile" "ec2_test_instance" {
   role = aws_iam_role.ec2_test_instance[0].name
 }
 
-resource "aws_network_interface" "ec2_test_primary" {
-  count = 1
-
-  subnet_id       = aws_subnet.ec2_test[0].id
-  security_groups = [aws_security_group.ec2_test[0].id]
-}
-
 resource "aws_instance" "destroy_test" {
   #checkov:skip=CKV_AWS_126:Detailed monitoring is intentionally disabled for this short-lived cost-optimized test instance.
   #checkov:skip=CKV_AWS_135:t2.micro does not support EBS optimization in this learning stack.
   count = var.create_ec2_test ? 1 : 0
 
-  ami                  = data.aws_ami.ec2_test.id
-  instance_type        = var.ec2_test_instance_type
-  iam_instance_profile = aws_iam_instance_profile.ec2_test_instance[0].name
+  ami                    = data.aws_ami.ec2_test.id
+  instance_type          = var.ec2_test_instance_type
+  iam_instance_profile   = aws_iam_instance_profile.ec2_test_instance[0].name
+  subnet_id              = aws_subnet.ec2_test[0].id
+  vpc_security_group_ids = [aws_security_group.ec2_test[0].id]
   user_data            = <<-EOF
     #!/bin/bash
     set -euxo pipefail
@@ -264,11 +259,6 @@ resource "aws_instance" "destroy_test" {
 
   root_block_device {
     encrypted = true
-  }
-
-  network_interface {
-    network_interface_id = aws_network_interface.ec2_test_primary[0].id
-    device_index         = 0
   }
 
   depends_on = [aws_iam_role_policy_attachment.ec2_test_instance_ssm]

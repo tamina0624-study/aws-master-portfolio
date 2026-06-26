@@ -155,7 +155,7 @@ resource "aws_flow_log" "ec2_test_vpc" {
 
   iam_role_arn         = aws_iam_role.ec2_test_flow_logs[0].arn
   log_destination_type = "cloud-watch-logs"
-  log_destination        = aws_cloudwatch_log_group.ec2_test_flow_logs[0].name
+  log_destination      = aws_cloudwatch_log_group.ec2_test_flow_logs[0].name
   traffic_type         = "ALL"
   vpc_id               = aws_vpc.ec2_test[0].id
 
@@ -236,7 +236,7 @@ resource "aws_instance" "destroy_test" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_test_instance[0].name
   subnet_id              = aws_subnet.ec2_test[0].id
   vpc_security_group_ids = [aws_security_group.ec2_test[0].id]
-  user_data            = <<-EOF
+  user_data              = <<-EOF
     #!/bin/bash
     set -euxo pipefail
 

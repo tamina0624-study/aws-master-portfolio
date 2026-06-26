@@ -158,7 +158,13 @@ jobs:
             echo "Flow logs IAM role policy already exists in state."
           else
             if aws iam get-role --role-name "${FLOW_LOGS_ROLE_NAME}" >/dev/null 2>&1; then
-              terraform import 'aws_iam_role_policy.ec2_test_flow_logs[0]' "${FLOW_LOGS_ROLE_NAME}:${FLOW_LOGS_ROLE_NAME}-flowlogs-policy"
+              POLICY_NAME="cicd-learning-sample-app-dev-flowlogs-policy"
+              # Check if the policy exists on the role
+              if aws iam get-role-policy --role-name "${FLOW_LOGS_ROLE_NAME}" --policy-name "${POLICY_NAME}" >/dev/null 2>&1; then
+                terraform import 'aws_iam_role_policy.ec2_test_flow_logs[0]' "${FLOW_LOGS_ROLE_NAME}:${POLICY_NAME}"
+              else
+                echo "Flow logs IAM role policy does not exist on the role, skipping import."
+              fi
             else
               echo "Flow logs IAM role does not exist, skipping policy import."
             fi

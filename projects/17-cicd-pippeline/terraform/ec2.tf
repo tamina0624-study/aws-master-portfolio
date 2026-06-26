@@ -236,7 +236,7 @@ resource "aws_network_interface" "ec2_test_primary" {
 resource "aws_instance" "destroy_test" {
   #checkov:skip=CKV_AWS_126:Detailed monitoring is intentionally disabled for this short-lived cost-optimized test instance.
   #checkov:skip=CKV_AWS_135:t2.micro does not support EBS optimization in this learning stack.
-  count = var.create_ec2_test ? 1 : 0
+  count = var.create_ec2_test ? 0 : 0
 
   ami                  = data.aws_ami.ec2_test.id
   instance_type        = var.ec2_test_instance_type

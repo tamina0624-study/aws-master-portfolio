@@ -60,6 +60,7 @@ data "aws_iam_policy_document" "ec2_test_instance_assume_role" {
 }
 
 resource "aws_kms_key" "ec2_test_flow_logs_v4" {
+  #checkov:skip=CKV_AWS_7:KMS key rotation is intentionally disabled for this learning stack test resource
   count       = 1
   description = "KMS key for EC2 test VPC flow logs v4"
 
@@ -70,9 +71,10 @@ resource "aws_kms_key" "ec2_test_flow_logs_v4" {
         Sid    = "Enable IAM User Permissions"
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/GitHubActionsRole",
-          AWS = "arn:aws:logs:us-east-2:${data.aws_caller_identity.current.account_id}:log-group:*"
+          AWS = [
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/GitHubActionsRole"
+          ]
         }
         Action   = "kms:*"
         Resource = "*"

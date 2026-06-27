@@ -70,7 +70,7 @@ variable "ec2_test_subnet_cidr" {
 variable "create_ecr" {
   description = "Whether to create the ECR repository"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "create_ecs" {

@@ -4,3 +4,4 @@ pytest
 pytest-cov
 pip-audit
 checkov
+flask

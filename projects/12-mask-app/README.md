@@ -15,6 +15,10 @@
 
 本プロジェクトは、その「貼るだけでマスクできる」ツールを Vanilla JavaScript 版と React 版の 2 実装で開発した成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/ms4RLhgjWjY?si=rqfyYffZSTu1_DXP)
+
 ---
 
 テキスト内の機密情報（メールアドレス・電話番号・キーワード）を自動検出してマスキングするツール。

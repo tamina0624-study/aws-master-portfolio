@@ -15,6 +15,10 @@ CPU・メモリ・エラー率などのメトリクスを常時監視し、閾�
 
 本プロジェクトは、その CloudWatch + SNS + Lambda によるアラート設計と通知整形の仕組みを Terraform で実装した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/Y2yxavm9STY?si=weQZlMQs64X0eRdQ)
+
 ---
 
 CloudWatch アラートの設計・構築と、SNS → Lambda によるアラートメッセージ整形の実装例。

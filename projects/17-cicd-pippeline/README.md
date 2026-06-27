@@ -13,6 +13,10 @@ CI/CD パイプラインは「人が手を動かす作業をコードで置き�
 
 本プロジェクトは、その CI/CD の仕組みをゼロから構築し、実際に 11 件のトラブルを解決しながら完成させた学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/SMyneHPaHiQ?si=hMk11k4HDCYYhpP6)
+
 ---
 
 ![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)

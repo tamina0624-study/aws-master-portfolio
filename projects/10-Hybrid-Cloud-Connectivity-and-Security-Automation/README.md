@@ -15,6 +15,11 @@ WAF・NACL・Security Group を役割に応じて使い分け、多層でネッ�
 
 本プロジェクトは、VPN によるハイブリッド接続とセキュリティ自動化を統合した構成を Terraform（モジュール分割）で一から実装した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画①-FF0000?logo=youtube&logoColor=white)](https://youtu.be/jMmm9RzOXgs?si=6krEAmD5TVFVCSy7)
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画②-FF0000?logo=youtube&logoColor=white)](https://youtu.be/J2S-R56NTQI?si=ZjhJph9eG2jTT7vC)
+
 ---
 
 AWS VPC とオンプレミス模擬 VPC を VPN で接続し、GuardDuty・WAF・Lambda による自律防御を組み合わせた統合セキュリティ構成。

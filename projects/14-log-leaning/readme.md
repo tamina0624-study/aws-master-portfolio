@@ -14,6 +14,12 @@
 
 本プロジェクトは、その AWS ログ運用の全体像を、設計から Terraform 実装・CLI 検証・可視化まで一貫して学んだ成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画①-FF0000?logo=youtube&logoColor=white)](https://youtu.be/D0yq7RBA7Y4?si=ZFfNWKRONoC8y8JT)
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画②-FF0000?logo=youtube&logoColor=white)](https://youtu.be/pcL7G5zZGWQ?si=6cOjcKHaYTRE0asG)
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画③-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yZLg4nFTc0Y?si=ATEopEeO5r91c8X0)
+
 ---
 
 AWSにおけるログ設計・収集・分析・可視化・運用を一通り学ぶための学習フォルダです。

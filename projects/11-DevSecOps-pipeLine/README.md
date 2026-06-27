@@ -14,6 +14,10 @@
 
 本プロジェクトは、その DevSecOps の考え方を、コンテナビルドから EKS デプロイ・監視基盤まで一貫して実装した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/WyBvxLbeksA?si=UdiLBa3QMc4sPzx3)
+
 ---
 
 セキュリティ・スケーラビリティ・可観測性を軸に、コンテナアプリケーションから EKS 基盤まで一貫して自動化したエンタープライズ向け DevSecOps パイプライン。

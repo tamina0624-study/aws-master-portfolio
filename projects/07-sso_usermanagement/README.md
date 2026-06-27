@@ -15,6 +15,10 @@ Terraform でコード化すれば、権限設定がレビュー可能・再現�
 
 本プロジェクトは、その IAM Identity Center によるユーザー管理と権限ライフサイクルを設計・実装した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/OqYcPcz9Upg?si=-XXevE1bNgC1wp0n)
+
 ---
 
 AWS IAM Identity Center（旧 SSO）を Terraform でコード化し、エンタープライズ基準の ID・アクセス管理を実践した。

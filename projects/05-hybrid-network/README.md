@@ -14,6 +14,10 @@
 
 本プロジェクトは、その VPN + BGP によるハイブリッド接続をフェイルオーバー検証まで含めて Terraform でコード化した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/VfRKMsjgHKw?si=O4Zy0Sa_ZV8iCa0p)
+
 ---
 
 AWS とオンプレミス環境（EC2 で模擬）を Site-to-Site VPN + BGP で接続するハイブリッドネットワーク構成。

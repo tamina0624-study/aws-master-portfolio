@@ -13,6 +13,10 @@
 
 本プロジェクトは、その「壊せないセキュリティ基盤」を Terraform でコード化した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/pqa8ce0t6w8?si=2mqEqC8wWMLPc26s)
+
 ---
 
 エンタープライズ環境を想定した AWS セキュリティ基盤のコード化。

@@ -15,6 +15,10 @@
 
 本プロジェクトは、その機密情報管理の全体像を、実際に CLI で検証・比較しながら理解した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/lu1mEJJ2xrw?si=rB2yvqPH4OGo6Oyp)
+
 ---
 
 AWS のキー管理・秘密情報管理を一連で検証。

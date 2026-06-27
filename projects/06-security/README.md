@@ -14,6 +14,10 @@
 
 本プロジェクトは、その検知から自動遮断までの一連のフローを Terraform で実装した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/KKkU8zgWxkw?si=MOJ_0DfkCVIcwZ7i)
+
 ---
 
 GuardDuty が検知した脅威を EventBridge でキャッチし、Lambda が自動的に WAF の IP セットへブロック登録する自律防御の仕組みを Terraform で構築した。

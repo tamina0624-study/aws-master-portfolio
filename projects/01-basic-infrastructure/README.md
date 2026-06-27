@@ -12,6 +12,10 @@
 
 本プロジェクトは、その Terraform による IaC の基礎を、VPC・EC2・S3 の構築を通じて習得した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yLGJA2uBys4?si=9_04qtJZVdDmsfDE)
+
 ---
 
 AWS の基本インフラを Terraform のモジュール構成でコード化した。

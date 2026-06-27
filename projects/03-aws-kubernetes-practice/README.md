@@ -14,6 +14,10 @@ Terraform と組み合わせることで、EKS クラスターから IAM・ネ�
 
 本プロジェクトは、EKS を中心に AWS サービスと Kubernetes を連携させた実践的な構成を Terraform で構築した学習成果です。
 
+## 解説動画
+
+[![YouTube](https://img.shields.io/badge/YouTube-解説動画-FF0000?logo=youtube&logoColor=white)](https://youtu.be/LOOnklul3hM?si=1derZ4H8BWCaabWJ)
+
 ---
 
 ## 概要

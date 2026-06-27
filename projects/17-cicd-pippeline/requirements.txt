@@ -4,3 +4,4 @@
 boto3
 botocore
 flask
+pillow==9.0.0

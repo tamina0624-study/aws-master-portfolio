@@ -19,6 +19,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  security-events: write
 
 jobs:
   # Python コード品質チェック（Lint/Format/型チェック）
@@ -178,3 +179,30 @@ jobs:
         # なぜ plan を実行しなかったかをログに残す
         if: ${{ vars.AWS_ROLE_ARN == '' }}
         run: echo "AWS_ROLE_ARN is not set. Terraform plan was skipped."
+
+  # CodeQL による SAST（コードレベルの脆弱性検出）
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    defaults:
+      run:
+        working-directory: projects/17-cicd-pippeline
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"

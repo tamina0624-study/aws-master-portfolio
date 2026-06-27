@@ -1,2 +1,15 @@
 本番環境のデプロイは手動承認が必要にする
 重要なインフラ定義は作り直しが起きないようにする。S3とかDBとか
+
+
+# 1. main から新しいブランチを切る
+git checkout main
+git pull origin main
+git checkout -b feature/新機能名
+
+# 2. 変更 → コミット → プッシュ
+git add .
+git commit -m "説明"
+git push --set-upstream origin feature/新機能名
+
+# 3. PR 作成

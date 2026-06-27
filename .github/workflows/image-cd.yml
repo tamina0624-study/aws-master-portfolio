@@ -50,7 +50,6 @@ jobs:
           push: ${{ vars.AWS_ROLE_ARN != '' }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
         if: ${{ vars.AWS_ROLE_ARN != '' }}

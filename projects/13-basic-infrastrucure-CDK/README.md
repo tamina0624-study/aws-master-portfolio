@@ -1,89 +1,110 @@
-# Welcome to your CDK TypeScript project
+# 13 Basic Infrastructure (AWS CDK)
 
-This is a blank project for CDK development with TypeScript.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-## Useful commands
-
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
+01-basic-infrastructure で Terraform を使って構築した基本 AWS インフラを、AWS CDK (TypeScript) で再実装したプロジェクト。
+「インフラをプログラミング言語で記述する」CDK の概念を実際に動かして習得した。
 
 ---
 
-# デプロイまでの実行コマンド・発生したエラーと対処法
+## 構成概要
 
-## 実行した主なコマンド
+```
+┌─────────────────────────────────────────────────────┐
+│               AWS CDK (TypeScript)                  │
+│                                                     │
+│  bin/ エントリーポイント                             │
+│    └─ lib/ スタック定義 (TypeScript)                 │
+│           │ cdk synth                               │
+│           ▼                                         │
+│       CloudFormation テンプレート                   │
+│           │ cdk deploy                              │
+│           ▼                                         │
+│  ┌──────────────────────────────────────────────┐   │
+│  │              AWS                             │   │
+│  │  VPC                                        │   │
+│  │  ├── パブリックサブネット                    │   │
+│  │  │     └── EC2 (Security Group付き)          │   │
+│  │  └── プライベートサブネット                  │   │
+│  └──────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
 
-1. CDKプロジェクト初期化
+---
+
+## Terraform との違い
+
+| 観点 | Terraform | AWS CDK |
+|------|-----------|---------|
+| 記述言語 | HCL（独自DSL）| TypeScript / Python 等 |
+| 型チェック | なし | あり（コンパイル時に検出）|
+| 抽象度 | リソース単位 | Construct による高レベル抽象化 |
+| 出力 | tfstate | CloudFormation テンプレート |
+| AWS との親和性 | プロバイダー経由 | AWS 公式ライブラリ |
+
+---
+
+## ファイル構成
+
 ```
-npx cdk init app --language typescript
+13-basic-infrastrucure-CDK/
+├── bin/
+│   └── 13-basic-infrastrucure-cdk.ts  # エントリーポイント
+├── lib/
+│   └── 13-basic-infrastrucure-cdk-stack.ts  # リソース定義（編集対象）
+├── test/
+│   └── *.test.ts                       # Jest ユニットテスト
+├── cdk.json                            # CDK 設定
+├── tsconfig.json                       # TypeScript 設定
+├── package.json
+└── 構成.md                             # フォルダ構成の解説
 ```
-2. 依存パッケージインストール
-```
+
+---
+
+## 実行方法
+
+```bash
+# 依存パッケージインストール
 npm install aws-cdk-lib constructs
-```
-3. TypeScriptビルド
-```
+
+# TypeScript ビルド
 npm run build
-```
-4. CDKテンプレート生成
-```
+
+# CloudFormation テンプレート生成（構文確認）
 npx cdk synth
-```
-5. CDKブートストラップ（初回のみ）
-```
+
+# 初回のみ：CDK 用リソースをブートストラップ
 npx cdk bootstrap
-```
-6. EC2用キーペア作成（AWS CLI）
-```
-aws ec2 create-key-pair --key-name portfolio-key --query 'KeyMaterial' --output text > securet/portfolio-key.pem
-```
-7. CDKデプロイ
-```
+
+# EC2 用キーペア作成（初回のみ）
+aws ec2 create-key-pair --key-name portfolio-key \
+  --query 'KeyMaterial' --output text > securet/portfolio-key.pem
+
+# デプロイ
 npx cdk deploy
+
+# 差分確認
+npx cdk diff
+
+# ユニットテスト
+npm run test
 ```
 
 ---
 
-## 発生した主なエラーと対処法
+## デプロイ時に解決したエラー
 
-### 1. 依存パッケージの不整合エラー
-- 内容：`Cannot find module './assert-valid-pattern.js'` など
-- 対処：`node_modules`と`package-lock.json`を削除し、`npm install`で再インストール
-
-### 2. CDKデプロイ時のエラー
-- 内容：`SSM parameter /cdk-bootstrap/hnb659fds/version not found` など
-- 対処：`npx cdk bootstrap` を実行し、CDK用の初期リソースを作成
-
-### 3. EC2インスタンス作成失敗
-- 内容：`The key pair 'portfolio-key' does not exist`（キーペアが存在しない）
-- 対処：AWS CLIで `aws ec2 create-key-pair --key-name portfolio-key ...` を実行し、キーペアを作成
+| エラー | 原因 | 対処 |
+|-------|------|------|
+| `Cannot find module` | node_modules の不整合 | node_modules / package-lock.json 削除後 npm install |
+| `SSM parameter /cdk-bootstrap/... not found` | ブートストラップ未実施 | `npx cdk bootstrap` を実行 |
+| `key pair 'portfolio-key' does not exist` | キーペア未作成 | `aws ec2 create-key-pair` で事前に作成 |
 
 ---
 
-## コマンド詳細説明
+## 技術スタック
 
-1. **CDKプロジェクト初期化**
-   - `npx cdk init app --language typescript`
-   - AWS CDKの新規プロジェクトをTypeScriptで初期化します。必要なディレクトリや設定ファイル（cdk.json, tsconfig.json, package.json など）が自動生成されます。
-
-2. **依存パッケージインストール**
-   - `npm install aws-cdk-lib constructs`
-   - AWS CDKでAWSリソースを操作するためのライブラリ（aws-cdk-lib）と、CDKの基盤となるconstructsパッケージをインストールします。
-
-4. **CDKテンプレート生成**
-   - `npx cdk synth`
-   - CDKで記述したTypeScriptコードからCloudFormationテンプレート（YAML/JSON）を生成します。構文エラーやリソース定義の問題がないかもこの時点で検証されます。
-
-5. **CDKブートストラップ（初回のみ）**
-   - `npx cdk bootstrap`
-   - CDKでデプロイを行うために必要なS3バケットやIAMロールなどの初期リソースを、指定したAWSアカウント・リージョンに自動作成します。初回のみ必要です。
-
----
-
-上記の手順・対処で無事にCDKデプロイが完了しました。
+- **IaC**: AWS CDK (TypeScript)
+- **言語**: TypeScript
+- **出力**: AWS CloudFormation
+- **テスト**: Jest
+- **AWS**: VPC, EC2, Security Group

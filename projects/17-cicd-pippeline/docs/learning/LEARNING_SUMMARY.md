@@ -2,7 +2,8 @@
 
 ## プロジェクト完成日
 
-2026-06-21
+2026-06-21（基本パイプライン）
+2026-06-27（サーバーイメージ CI/CD 追加）
 
 ## 実装概要
 
@@ -18,8 +19,10 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 | **Terraform検証** | fmt, validate, plan + checkov | `terraform/` |
 | **セキュリティ** | pip-audit, gitleaks, checkov実装 | `.github/workflows/ci.yml` |
 | **ヘルスチェック** | S3バケット検証スクリプト | `scripts/health_check.py` |
-| **ロールバック** | 自動・手動ロールバック手順書 | `scripts/rollback.ps1`, `docs/DEPLOYMENT_HEALTH_AND_ROLLBACK.md` |
-| **ブランチ保護** | 必須ステータスチェック自動適用 | `scripts/apply-branch-protection.ps1` |
+| **Image CI** | PR時のイメージビルド＆セキュリティスキャン（Trivy, CodeQL） | `.github/workflows/image-ci.yml` |
+| **Image CD** | mainマージ時のイメージECRプッシュ＆ECSデプロイ | `.github/workflows/image-cd.yml` |
+| **Docker** | マルチステージビルド、非rootユーザー、ヘルスチェック | `Dockerfile` |
+| **セキュリティスキャン** | Trivy (FS+イメージスキャン)、CodeQL (SAST) | `.github/workflows/image-ci.yml` |
 
 ### 🔍 各ツールで検出できる不具合（具体例）
 
@@ -74,10 +77,21 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 - 手順漏れ、依存関係ミス、戻し先指定ミスの発見に有効
 - 定期演習により障害時の復旧失敗リスクを低減
 
-#### 6. ブランチ保護（必須ステータスチェック）
-- 不具合を直接検出する機能ではないが、main流入前の防波堤として有効
-- CI失敗・未レビュー状態のマージを防止
-- 品質未達コードの本番流入リスクを継続的に抑制
+#### 6. サーバーイメージ CI/CD（新規 2026-06-27）
+- ✅ マルチステージ Dockerfile（builder → runtime）
+- ✅ Python 3.14-slim ベースイメージ（セキュリティ・サポート期間向上）
+- ✅ Trivy ファイルシステムスキャン（requirements.txt 依存関係チェック）
+- ✅ Trivy イメージスキャン（Debian OS パッケージの脆弱性検出）
+- ✅ CodeQL SAST（Python コード脆弱性検出）
+- ✅ ECR へのユニークタグプッシュ（github.sha で上書き問題解決）
+- ✅ ECS への自動デプロイ（dev 環境）
+
+### 7. セキュリティ多層防御
+- ✅ **ビルド前チェック**: pip-audit, gitleaks, checkov（コード段階）
+- ✅ **ビルド時チェック**: Trivy FS スキャン（requirements.txt の依存関係チェック）
+- ✅ **ビルド後チェック**: Trivy イメージスキャン（Debian パッケージの脆弱性検出）
+- ✅ **SAST**: CodeQL（Python コード品質・脆弱性検出）
+- ✅ **ランタイムセキュリティ**: 非root ユーザー、readonly root FS、ヘルスチェック
 
 ---
 
@@ -140,6 +154,25 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 - ✅ 型チェック（mypy設定）
 - ✅ テストフレームワーク（pytest）
 - ✅ カバレッジ管理（pytest-cov）
+- ✅ Flask Web アプリケーション実装
+
+### Docker & コンテナセキュリティ
+- ✅ マルチステージビルド（イメージサイズ最適化）
+- ✅ Python 3.14-slim ベースイメージ選定
+- ✅ 非root ユーザー設定（UID/GID 明示化）
+- ✅ ヘルスチェック実装（HEALTHCHECK）
+- ✅ Readonly ファイルシステム設定
+
+### セキュリティスキャン
+- ✅ Trivy ファイルシステムスキャン（dependencies チェック）
+- ✅ Trivy コンテナイメージスキャン（OS パッケージ脆弱性検出）
+- ✅ CodeQL SAST（Python コード脆弱性・品質検出）
+- ✅ 多段階脆弱性検出（ビルド前→ビルド中→ビルド後）
+
+### ECR & イメージ管理
+- ✅ ECR リポジトリ作成・設定（イミュータブルタグ、push時スキャン、ライフサイクル）
+- ✅ ユニークタグ戦略（github.sha による重複防止）
+- ✅ GitHub Actions から ECR への認証（OIDC）
 
 ### Terraform
 - ✅ マルチ環境対応（dev/stg/prod 変数分離）
@@ -226,9 +259,10 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
    - Architecture Decision Records (ADR)
    - 運用ガイドのビデオ化
 
-6. **サーバーイメージ CI/CD**
-   - Docker イメージのビルド・プッシュ・スキャンをパイプラインに組み込む
-   - ECR への自動プッシュと ECS/EKS 連携
+6. **本番デプロイ拡張**
+   - ECS 本番環境（prod）のデプロイ承認フロー
+   - 段階的ローリングアップデート
+   - Blue/Green デプロイメント
 
 ---
 
@@ -247,6 +281,8 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 | 7 | S3作成 409エラー（BucketAlreadyOwnedByYou） | state と実リソースの不整合 | `terraform import` + `-var="environment=..."` 明示で再apply | 既存リソースがある環境は import/再実行戦略をワークフローに組み込み |
 | 8 | ヘルスチェック 403（AccessDenied） | Actions 実行ロールの S3 権限不足 | List/Get/Tagging などの必要 API をロールポリシーに追加 | ヘルスチェック実装前に必要 API 一覧を権限設計へ反映 |
 | 9 | aws_s3_bucket_tagging 非対応エラー | 利用中 provider バージョンと該当リソースが非対応 | 該当リソースを外し、タグ処理を CLI 側へ退避 | provider バージョンと利用リソースの対応表を事前確認 |
+| 10 | ECR latest タグ上書き失敗（409） | ECR イミュータブルタグ設定により上書き禁止 | `github.sha` をユニークタグとして使用、`latest` 削除 | タグ戦略を事前設計、イミュータブルタグ設定を推奨 |
+| 11 | Dockerfile python:3.12-slim で脆弱性検出 | ベースイメージの OS パッケージが古い | python:3.14-slim に更新（サポート期間延長、バグ修正充実） | セキュアなベースイメージ選定（最新 LTS 優先） |
 
 ---
 
@@ -280,13 +316,15 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 ## 成果物一覧
 
 ### コード
-- Python: `app/calculator.py`, `tests/test_calculator.py`
+- Python: `app/server.py` (Flask Web アプリ), `tests/test_server.py` (テスト 92% coverage)
 - Terraform: `terraform/*.tf`
 - Shell/PowerShell: `scripts/*.ps1`, `scripts/*.py`
 
 ### ワークフロー
-- `.github/workflows/ci.yml` (4 jobs)
-- `.github/workflows/cd.yml` (3 jobs)
+- `.github/workflows/ci.yml` (4 jobs: ruff/mypy/pytest/コード品質)
+- `.github/workflows/cd.yml` (Terraform デプロイ)
+- `.github/workflows/image-ci.yml` (イメージビルド・セキュリティスキャン: Trivy FS/image, CodeQL)
+- `.github/workflows/image-cd.yml` (ECR プッシュ・ECS デプロイ)
 
 ### ドキュメント
 - `README.md` (このプロジェクトの概要)
@@ -295,24 +333,26 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 - `LEARNING_SUMMARY.md` (この文書)
 
 ### スクリプト/設定
+- `Dockerfile` (マルチステージ、python:3.14-slim、非root、ヘルスチェック)
 - `pyproject.toml` (Python設定)
-- `requirements-dev.txt` (依存パッケージ)
+- `requirements.txt` (Flask 等のランタイム依存)
+- `requirements-dev.txt` (テスト・品質チェック依存)
 
 ---
 
 ## 反省点と改善案
 
 ### 反省
-1. **テンプレート構成**: ダミー S3 バケットではなく、実際のアプリケーション（Lambda, ECS など）を対象にすればより実践的だった
-2. **通知未実装**: Slack 連携まで完成させたかった
-3. **ドキュメント図解**: CI/CD フロー図をアスキーアートで表現したが、よりビジュアルに
-4. **エラーハンドリング**: 各スクリプトの例外処理が簡易的
+1. **テンプレート構成**: ダミー S3 バケットではなく、実際のアプリケーション（Flask Web サーバー）を対象にしたので実践的になった ✅
+2. **イメージセキュリティ**: Trivy スキャンで OS/Python パッケージ脆弱性を多層検出できるようになった ✅
+3. **ベースイメージ選定**: python:3.14-slim に更新してサポート期間を延長 ✅
+4. **タグ戦略**: ECR イミュータブルタグ対応で github.sha による一意化を実装 ✅
 
 ### 改善案
-1. 実際のアプリケーションサンプル（Flask API など）を対象に
-2. Slack notification アクション追加
-3. draw.io で CI/CD 図を作成・埋め込み
-4. 本番レベルのエラーハンドリング・ログ
+1. ✅ 実際のアプリケーションサンプル（Flask API など）を対象に → 実装完了
+2. ⏳ Slack notification アクション追加 → 今後の拡張
+3. ⏳ draw.io で CI/CD 図を作成・埋め込み → 今後の拡張
+4. ✅ セキュリティスキャン多層化（Trivy + CodeQL）→ 実装完了
 
 ---
 
@@ -325,12 +365,24 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 │   └─ Branch Protection Rules
 ├─ AWS
 │   ├─ S3 (デプロイターゲット)
+│   ├─ ECR (コンテナイメージリポジトリ)
+│   ├─ ECS (Fargate デプロイ)
 │   ├─ IAM (OIDC認証)
 │   └─ CloudWatch (ログ)
 ├─ Terraform
 │   ├─ AWS Provider
-│   ├─ state management
+│   ├─ ECR リソース管理
+│   ├─ ECS リソース管理
 │   └─ Multi-environment
+├─ Docker
+│   ├─ マルチステージビルド
+│   ├─ python:3.14-slim ベース
+│   └─ セキュリティベストプラクティス
+├─ セキュリティスキャン
+│   ├─ Trivy (FS + イメージスキャン)
+│   ├─ CodeQL (SAST)
+│   ├─ pip-audit, gitleaks, checkov
+│   └─ 多層脆弱性検出
 └─ Python
     ├─ ruff (Lint)
     ├─ mypy (型チェック)

@@ -190,6 +190,11 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 - Python で AWS SDK を使用（ヘルスチェック）
 - DryRun オプションで安全性確保
 
+### 6. 重要インフラの保護設計
+- 本番環境デプロイは必ず手動承認フローを通す（自動 apply 禁止）
+- S3・DB などの重要リソースは `lifecycle { prevent_destroy = true }` で誤削除を防ぐ
+- Terraform state と実リソースの整合性を維持し、既存リソースを誤って再作成しない設計を徹底
+
 ---
 
 ## 課題と今後の拡張
@@ -220,6 +225,28 @@ CI/CDパイプラインをゼロから構築し、以下の機能を実装しま
 5. **ドキュメント**
    - Architecture Decision Records (ADR)
    - 運用ガイドのビデオ化
+
+6. **サーバーイメージ CI/CD**
+   - Docker イメージのビルド・プッシュ・スキャンをパイプラインに組み込む
+   - ECR への自動プッシュと ECS/EKS 連携
+
+---
+
+## 実装時の躓きと対策（CD不具合対応 2026-06-24〜2026-06-25）
+
+実際のCDパイプライン構築中に発生した問題と再発防止策の記録。
+
+| # | 問題 | 原因 | 対策 | 再発防止 |
+|---|------|------|------|----------|
+| 1 | CDがスキップされる | `AWS_ROLE_ARN` などの Repository Variables 未設定 | Variables と Environment を設定 | 新規リポジトリの初期設定チェックリストに追加 |
+| 2 | OIDC認証失敗（AssumeRoleWithWebIdentity） | IAMロール信頼ポリシーの `sub` 条件が厳しすぎ | `StringLike` + リポジトリスコープの条件に調整 | push/PR/workflow_dispatch の3系統で事前疎通テスト |
+| 3 | cd.yml YAML構文エラー | BOM付きUTF-8・インデント崩れ | BOMなしUTF-8で保存、インデントを全面修正 | push前にローカルで YAML lint 相当チェックを実施 |
+| 4 | ruff I001エラー（import並び順） | stdlib と third-party import の区切りが規約不一致 | import 順を修正（空行で区切る） | ローカルで `ruff check` / `ruff format --check` を必須化 |
+| 5 | mypy boto3型情報エラー | deploy スクリプトまで厳格型チェック対象になっていた | `pyproject.toml` で mypy 対象範囲を調整 | アプリ本体と運用スクリプトで品質ゲートを分離 |
+| 6 | Terraform init 失敗（Duplicate data resource） | `main.tf` 内で同一 `data` ブロックが重複定義 | 重複定義を削除、未使用 data source も整理 | PR時に `terraform validate` を必須化 |
+| 7 | S3作成 409エラー（BucketAlreadyOwnedByYou） | state と実リソースの不整合 | `terraform import` + `-var="environment=..."` 明示で再apply | 既存リソースがある環境は import/再実行戦略をワークフローに組み込み |
+| 8 | ヘルスチェック 403（AccessDenied） | Actions 実行ロールの S3 権限不足 | List/Get/Tagging などの必要 API をロールポリシーに追加 | ヘルスチェック実装前に必要 API 一覧を権限設計へ反映 |
+| 9 | aws_s3_bucket_tagging 非対応エラー | 利用中 provider バージョンと該当リソースが非対応 | 該当リソースを外し、タグ処理を CLI 側へ退避 | provider バージョンと利用リソースの対応表を事前確認 |
 
 ---
 

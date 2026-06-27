@@ -1,0 +1,103 @@
+name: Image CD
+
+# 実行トリガー: CI ワークフローが main で成功後に自動起動（または手動実行）
+# 「テスト・品質チェックが通ったコードのみ ECR に push しデプロイする」ことで不具合イメージの流入を防ぐ
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+# OIDC で AWS に接続するための最小権限
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # ECR へのビルド＆プッシュ（全環境共通のイメージ）
+  build-and-push:
+    runs-on: ubuntu-latest
+    # CI が失敗またはキャンセルした場合はスキップ
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      registry: ${{ steps.login-ecr.outputs.registry }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push to ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: projects/17-cicd-pippeline
+          push: ${{ vars.AWS_ROLE_ARN != '' }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+
+      - name: Skip push note
+        if: ${{ vars.AWS_ROLE_ARN == '' }}
+        run: echo "AWS_ROLE_ARN is not set. ECR push was skipped."
+
+  # dev 環境デプロイ（自動）
+  deploy-dev:
+    environment: dev
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: ${{ vars.AWS_ROLE_ARN != '' && vars.ECS_CLUSTER_DEV != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition cicd-learning-sample-app-dev \
+            --query taskDefinition \
+            > /tmp/task-def-dev.json
+
+      - name: Render new task definition (dev)
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/task-def-dev.json
+          container-name: app
+          image: ${{ needs.build-and-push.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy to ECS (dev)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: cicd-learning-sample-app-dev
+          cluster: ${{ vars.ECS_CLUSTER_DEV }}
+          wait-for-service-stability: true

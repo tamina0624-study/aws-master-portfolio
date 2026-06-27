@@ -22,3 +22,18 @@ output "ec2_test_private_ip" {
   description = "Private IP for the EC2 destroy test"
   value       = try(aws_instance.destroy_test[0].private_ip, null)
 }
+
+output "ecr_repository_url" {
+  description = "ECR repository URL for image push"
+  value       = try(aws_ecr_repository.app[0].repository_url, null)
+}
+
+output "ecs_cluster_name" {
+  description = "ECS cluster name"
+  value       = try(aws_ecs_cluster.app[0].name, null)
+}
+
+output "ecs_service_name" {
+  description = "ECS service name"
+  value       = try(aws_ecs_service.app[0].name, null)
+}

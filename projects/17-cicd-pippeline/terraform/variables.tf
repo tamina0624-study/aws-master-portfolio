@@ -63,3 +63,36 @@ variable "ec2_test_subnet_cidr" {
   type        = string
   default     = "10.42.1.0/24"
 }
+
+# ─────────────────────────────────────────────
+# ECR / ECS 変数
+# ─────────────────────────────────────────────
+variable "create_ecr" {
+  description = "Whether to create the ECR repository"
+  type        = bool
+  default     = true
+}
+
+variable "create_ecs" {
+  description = "Whether to create ECS Fargate resources (cluster, service, task definition)"
+  type        = bool
+  default     = false
+}
+
+variable "ecs_vpc_id" {
+  description = "VPC ID for ECS tasks (required when create_ecs = true)"
+  type        = string
+  default     = ""
+}
+
+variable "ecs_subnet_ids" {
+  description = "Subnet IDs for ECS tasks (required when create_ecs = true)"
+  type        = list(string)
+  default     = []
+}
+
+variable "ecs_container_port" {
+  description = "Container port exposed by the application"
+  type        = number
+  default     = 8080
+}

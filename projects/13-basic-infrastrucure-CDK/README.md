@@ -1,5 +1,22 @@
 # 13 Basic Infrastructure (AWS CDK)
 
+---
+
+> 「Terraform の HCL って独自言語で、書き方を覚えるのに時間がかかる。
+> 普段使っている Python や TypeScript でインフラを書けたらいいのに。」
+
+> 「よく使うインフラのパターンを、ライブラリとして再利用できる形にしたい。
+> HCL だと抽象化しにくくて、コピペが増えてしまう。」
+
+**AWS CDK（Cloud Development Kit）** は、TypeScript・Python・Java などの普通のプログラミング言語でインフラを記述できるフレームワークです。
+書いたコードは内部で CloudFormation テンプレートに変換されて AWS にデプロイされます。
+型チェック・テスト・IDE 補完が使えるため、インフラ定義のミスをコードレベルで検出できます。
+「Construct」という再利用可能なコンポーネント設計も特徴で、大規模プロジェクトでの保守性が高まります。
+
+本プロジェクトは、Terraform で構築済みの基本インフラを AWS CDK (TypeScript) で再実装し、2 つの IaC ツールの違いを実践で理解した学習成果です。
+
+---
+
 01-basic-infrastructure で Terraform を使って構築した基本 AWS インフラを、AWS CDK (TypeScript) で再実装したプロジェクト。
 「インフラをプログラミング言語で記述する」CDK の概念を実際に動かして習得した。
 

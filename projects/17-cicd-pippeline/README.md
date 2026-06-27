@@ -1,5 +1,20 @@
 # CI/CD Pipeline Portfolio Project
 
+> 「手動デプロイでコマンドを間違えて、本番環境を壊してしまった。
+> ロールバックの手順も曖昧で、復旧に 2 時間かかった。」
+
+> 「テストを省略してリリースしたら、すぐにバグが報告された。
+> セキュリティチェックは別の担当者が手動でやっているから、リリースのたびに待ちが発生する。」
+
+CI/CD パイプラインは「人が手を動かす作業をコードで置き換える」仕組みです。
+コードのプッシュと同時に品質チェック・セキュリティスキャン・テストが自動で走り、問題があればマージ自体をブロックできます。
+**GitHub Actions + OIDC** でアクセスキーを一切使わない安全な AWS 連携を実現し、`dev → stg → prod` の段階的デプロイ + 手動承認によって「壊れた状態で本番に届かない」設計が可能です。
+さらに Trivy・gitleaks・checkov・CodeQL による多層セキュリティスキャンを CI に組み込むことで、脆弱性やコードの問題をリリース前の早い段階で発見できます。
+
+本プロジェクトは、その CI/CD の仕組みをゼロから構築し、実際に 11 件のトラブルを解決しながら完成させた学習成果です。
+
+---
+
 ![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)
 ![CD](https://img.shields.io/badge/CD-Terraform_+_ECS-7B42BC?logo=terraform&logoColor=white)
 ![Security](https://img.shields.io/badge/Security-Multi_Layer-red?logo=shield&logoColor=white)

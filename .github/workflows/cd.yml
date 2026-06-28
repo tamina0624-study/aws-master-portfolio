@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "projects/17-cicd-pippeline/**"
+      - "projects/17-cicd-pipeline/**"
       - ".github/workflows/cd.yml"
   workflow_dispatch:
 
@@ -18,7 +18,7 @@ permissions:
 # Terraform コマンドの既定実行ディレクトリ
 defaults:
   run:
-    working-directory: projects/17-cicd-pippeline/terraform
+    working-directory: projects/17-cicd-pipeline/terraform
 
 jobs:
   # dev 環境デプロイ
@@ -35,7 +35,7 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
-        working-directory: projects/17-cicd-pippeline
+        working-directory: projects/17-cicd-pipeline
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -338,7 +338,7 @@ jobs:
       - name: Health Check
         run: |
           python scripts/health_check.py
-        working-directory: projects/17-cicd-pippeline
+        working-directory: projects/17-cicd-pipeline
         env:
           S3_BUCKET_NAME: ${{ steps.tf-outputs.outputs.s3_bucket_name }}
         if: ${{ vars.AWS_ROLE_ARN != '' }}

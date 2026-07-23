@@ -15,6 +15,11 @@ git push origin main
 #commitを取り消す
 git reset --soft HEAD~1
 
+#commitを取り消す(初めの1回はHEADが無い)
+git rm -r --cached .
+git update-ref -d HEAD
+
+
 #git index 修正
 git rm --cached -r .
 

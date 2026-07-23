@@ -34,7 +34,6 @@ AWS インフラ設計・IaC・セキュリティ自動化・CI/CD・コンテ�
 
 | プロジェクト | 内容 |
 |------------|------|
-| [02-kubernetes-basic](projects/02-kubernetes-basic/) | Pod / Service / Deployment の基礎マニフェスト |
 | [03-aws-kubernetes-practice](projects/03-aws-kubernetes-practice/) | EKS を使った AWS 上での実践構成 |
 
 ### セキュリティ・ガバナンス
@@ -44,7 +43,7 @@ AWS インフラ設計・IaC・セキュリティ自動化・CI/CD・コンテ�
 | [04-enterprise-landing-zone](projects/04-enterprise-landing-zone/) | CloudTrail・KMS・IAM Permissions Boundary・自動修復 Lambda によるセキュリティ基盤 |
 | [06-security](projects/06-security/) | GuardDuty → EventBridge → Lambda → WAF 自動 IP ブロック |
 | [07-sso_usermanagement](projects/07-sso_usermanagement/) | IAM Identity Center による SSO・権限ライフサイクル管理 |
-| [09-secret-upload-prevention](projects/09-secret-upload-prevention/) | .gitignore / secret フォルダ / pre-commit フックによる機密情報漏えい防止 |
+| [GitSecurityTool（別リポジトリ）](https://github.com/tamina0624-study/GitSecurityTool) | .gitignore / secret フォルダ / pre-commit フックによる機密情報漏えい防止 |
 | [16-key-management](projects/16-key-management/) | KMS・Parameter Store・Secrets Manager の使い分けと暗号化・監査設計 |
 
 ### ネットワーク

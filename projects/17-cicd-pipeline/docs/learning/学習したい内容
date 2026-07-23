@@ -147,8 +147,8 @@ Step 4: ブランチ保護ルールを設定する
 		- security-scan
 		- terraform-check
 	- 実行コマンド（PowerShell）:
-		- Dry Run: `./projects/17-cicd-pippeline/scripts/apply-branch-protection.ps1 -DryRun`
-		- 適用: `./projects/17-cicd-pippeline/scripts/apply-branch-protection.ps1`
+		- Dry Run: `./projects/17-cicd-pipeline/scripts/apply-branch-protection.ps1 -DryRun`
+		- 適用: `./projects/17-cicd-pipeline/scripts/apply-branch-protection.ps1`
 	- 事前準備:
 		- `GITHUB_TOKEN` にリポジトリ管理権限を持つトークンを設定する。
 - 完了判定:
